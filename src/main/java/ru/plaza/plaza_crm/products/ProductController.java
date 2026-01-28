@@ -11,22 +11,22 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/products")
-public class ProductsController {
-    private final ProductsService productsService;
+public class ProductController {
+    private final ProductService productService;
 
     @Autowired
-    public ProductsController(ProductsService productsService) {
-        this.productsService = productsService;
+    public ProductController(ProductService productService) {
+        this.productService = productService;
     }
 
     @GetMapping("/get-all-products")
     public List<Product> getAllProducts() {
-        return productsService.getAllProducts();
+        return productService.getAllProducts();
     }
 
     @PostMapping("/add-product")
     public Product addProduct(@RequestBody Product product) {
-        return productsService.addProduct(product);
+        return productService.addProduct(product);
     }
 
 }

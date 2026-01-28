@@ -1,9 +1,11 @@
 package ru.plaza.plaza_crm.customers;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 public class CustomerResponse {
     private Long id;
