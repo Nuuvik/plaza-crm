@@ -2,6 +2,7 @@ package ru.plaza.plaza_crm.orders;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,5 +34,15 @@ public class OrderController {
     @GetMapping("/get-all-orders")
     public List<OrderResponse> getAllOrders() {
         return orderService.getAllOrders();
+    }
+
+    @PatchMapping("/confirm-order/{id}")
+    public OrderResponse confirmOrder(@PathVariable Long id) {
+        return orderService.confirmOrder(id);
+    }
+
+    @PatchMapping("/cancel-order/{id}")
+    public OrderResponse cancelOrder(@PathVariable Long id) {
+        return orderService.cancelOrder(id);
     }
 }

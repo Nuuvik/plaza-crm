@@ -25,4 +25,17 @@ public class Product {
 
     @Column(name = "stock_quantity")
     private int stockQuantity;
+
+
+    public void decreaseStock(int qty) {
+        if (stockQuantity < qty) {
+            throw new IllegalStateException("Not enough stock");
+        }
+        stockQuantity -= qty;
+    }
+
+    public void increaseStock(int qty) {
+        stockQuantity += qty;
+    }
+
 }

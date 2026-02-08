@@ -15,6 +15,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import ru.plaza.plaza_crm.customers.Customer;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,14 +41,41 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
+    private BigDecimal totalAmount = BigDecimal.valueOf(0);
+
+
     public void addItem(OrderItem item) {
         items.add(item);
         item.setOrder(this);
+
+        BigDecimal itemTotal = item.getUnitPrice()
+                .multiply(BigDecimal.valueOf(item.getQuantity()));
+
+        totalAmount = totalAmount.add(itemTotal);
     }
 
     public void removeItem(OrderItem item) {
         items.remove(item);
         item.setOrder(null);
     }
+
+    public void confirm() {
+        if (status != OrderStatus.NEW) {
+            throw new IllegalStateException("Cannot confirm order");
+        }
+        status = OrderStatus.CONFIRMED;
+    }
+
+    public void cancel() {
+        if (status == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("Already cancelled");
+        }
+
+        for (OrderItem item : items) {
+            item.getProduct().increaseStock(item.getQuantity());
+        }
+        status = OrderStatus.CANCELLED;
+    }
+
 
 }

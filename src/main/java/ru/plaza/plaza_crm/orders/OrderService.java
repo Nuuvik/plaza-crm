@@ -2,6 +2,7 @@ package ru.plaza.plaza_crm.orders;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.plaza.plaza_crm.customers.Customer;
 import ru.plaza.plaza_crm.customers.CustomerRepository;
 import ru.plaza.plaza_crm.products.Product;
@@ -24,6 +25,7 @@ public class OrderService {
         this.productRepository = productRepository;
     }
 
+    @Transactional
     public OrderResponse createOrder(OrderRequest request) {
         Customer customer = customerRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
@@ -35,6 +37,11 @@ public class OrderService {
         for (OrderItemRequest itemRequest : request.getItems()) {
             Product product = productRepository.findById(itemRequest.getProductId())
                     .orElseThrow(() -> new RuntimeException("Product not found"));
+
+            if (product.getStockQuantity() < itemRequest.getQuantity()) {
+                throw new RuntimeException("Quantity exceeds stock limit");
+            }
+            product.decreaseStock(itemRequest.getQuantity());
 
             OrderItem item = new OrderItem();
             item.setProduct(product);
@@ -58,5 +65,21 @@ public class OrderService {
         return orderRepository.findAll().stream()
                 .map(OrderMapper::toResponse)
                 .toList();
+    }
+
+    @Transactional
+    public OrderResponse confirmOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        order.confirm();
+        return OrderMapper.toResponse(order);
+    }
+
+    @Transactional
+    public OrderResponse cancelOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        order.cancel();
+        return OrderMapper.toResponse(order);
     }
 }
