@@ -7,6 +7,8 @@ import ru.plaza.plaza_crm.customers.Customer;
 import ru.plaza.plaza_crm.customers.CustomerRepository;
 import ru.plaza.plaza_crm.products.Product;
 import ru.plaza.plaza_crm.products.ProductRepository;
+import ru.plaza.plaza_crm.util.exception.BadRequestException;
+import ru.plaza.plaza_crm.util.exception.ResourceNotFoundException;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ public class OrderService {
     @Transactional
     public OrderResponse createOrder(OrderRequest request) {
         Customer customer = customerRepository.findById(request.getCustomerId())
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
 
         Order order = new Order();
         order.setCustomer(customer);
@@ -36,10 +38,10 @@ public class OrderService {
 
         for (OrderItemRequest itemRequest : request.getItems()) {
             Product product = productRepository.findById(itemRequest.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
             if (product.getStockQuantity() < itemRequest.getQuantity()) {
-                throw new RuntimeException("Quantity exceeds stock limit");
+                throw new BadRequestException("Quantity exceeds stock limit");
             }
             product.decreaseStock(itemRequest.getQuantity());
 
@@ -57,7 +59,7 @@ public class OrderService {
 
     public OrderResponse getOrder(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         return OrderMapper.toResponse(order);
     }
 
@@ -70,7 +72,7 @@ public class OrderService {
     @Transactional
     public OrderResponse confirmOrder(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         order.confirm();
         return OrderMapper.toResponse(order);
     }
@@ -78,7 +80,7 @@ public class OrderService {
     @Transactional
     public OrderResponse cancelOrder(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         order.cancel();
         return OrderMapper.toResponse(order);
     }

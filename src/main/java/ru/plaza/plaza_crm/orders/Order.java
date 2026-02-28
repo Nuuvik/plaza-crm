@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import ru.plaza.plaza_crm.customers.Customer;
+import ru.plaza.plaza_crm.util.exception.BadRequestException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -61,14 +62,14 @@ public class Order {
 
     public void confirm() {
         if (status != OrderStatus.NEW) {
-            throw new IllegalStateException("Cannot confirm order");
+            throw new BadRequestException("Cannot confirm order");
         }
         status = OrderStatus.CONFIRMED;
     }
 
     public void cancel() {
         if (status == OrderStatus.CANCELLED) {
-            throw new IllegalStateException("Already cancelled");
+            throw new BadRequestException("Already cancelled");
         }
 
         for (OrderItem item : items) {

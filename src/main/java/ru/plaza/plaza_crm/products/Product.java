@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import ru.plaza.plaza_crm.util.exception.BadRequestException;
 
 import java.math.BigDecimal;
 
@@ -29,7 +30,7 @@ public class Product {
 
     public void decreaseStock(int qty) {
         if (stockQuantity < qty) {
-            throw new IllegalStateException("Not enough stock");
+            throw new BadRequestException("Not enough stock");
         }
         stockQuantity -= qty;
     }
