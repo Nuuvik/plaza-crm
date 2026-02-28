@@ -1,6 +1,8 @@
 package ru.plaza.plaza_crm.orders;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.plaza.plaza_crm.customers.Customer;
@@ -9,8 +11,6 @@ import ru.plaza.plaza_crm.products.Product;
 import ru.plaza.plaza_crm.products.ProductRepository;
 import ru.plaza.plaza_crm.util.exception.BadRequestException;
 import ru.plaza.plaza_crm.util.exception.ResourceNotFoundException;
-
-import java.util.List;
 
 @Service
 public class OrderService {
@@ -63,10 +63,13 @@ public class OrderService {
         return OrderMapper.toResponse(order);
     }
 
-    public List<OrderResponse> getAllOrders() {
-        return orderRepository.findAll().stream()
-                .map(OrderMapper::toResponse)
-                .toList();
+    public Page<OrderResponse> getOrders(OrderStatus status, Pageable pageable) {
+
+        Page<Order> page = (status == null)
+                ? orderRepository.findAll(pageable)
+                : orderRepository.findByStatus(status, pageable);
+
+        return page.map(OrderMapper::toResponse);
     }
 
     @Transactional

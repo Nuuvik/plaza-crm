@@ -1,10 +1,9 @@
 package ru.plaza.plaza_crm.products;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.plaza.plaza_crm.util.exception.ResourceNotFoundException;
-
-import java.util.List;
 
 @Service
 public class ProductService {
@@ -28,11 +27,17 @@ public class ProductService {
         return mapToResponse(product);
     }
 
-    public List<ProductResponse> findAll() {
-        return repository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+    public Page<ProductResponse> findAll(Pageable pageable) {
+        return repository.findAll(pageable).map(this::mapToResponse);
+    }
+
+    public Page<ProductResponse> findAll(String car, Pageable pageable) {
+
+        Page<Product> page = (car == null)
+                ? repository.findAll(pageable)
+                : repository.findByCar(car, pageable);
+
+        return page.map(this::mapToResponse);
     }
 
     public ProductResponse findById(Long id) {

@@ -4,8 +4,8 @@ public class CustomerMapper {
     public static Customer toEntity(CustomerRequest dto) {
         Customer c = new Customer();
         c.setName(dto.getName());
-        c.setPhone(dto.getEmail());
-        c.setEmail(dto.getPhone());
+        c.setPhone(dto.getPhone());
+        c.setEmail(dto.getEmail());
         c.setTelegram(dto.getTelegram());
         return c;
     }

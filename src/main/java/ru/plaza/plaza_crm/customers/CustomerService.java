@@ -1,6 +1,8 @@
 package ru.plaza.plaza_crm.customers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,12 +16,9 @@ public class CustomerService {
         this.customerRepository = customerRepository;
     }
 
-    List<CustomerResponse> getAllCustomers() {
-        List<Customer> customers = customerRepository.findAll();
-        return customers.stream()
-                .map(CustomerMapper::toResponse)
-                .toList();
-
+    public Page<CustomerResponse> findAll(String name, String phone, String email, Pageable pageable) {
+        return customerRepository.search(name, phone, email, pageable)
+                .map(CustomerMapper::toResponse);
     }
 
     CustomerResponse getCustomerById(Long id) {
