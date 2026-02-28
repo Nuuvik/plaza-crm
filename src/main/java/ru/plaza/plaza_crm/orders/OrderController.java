@@ -1,5 +1,6 @@
 package ru.plaza.plaza_crm.orders;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -22,7 +23,7 @@ public class OrderController {
     }
 
     @PostMapping("/create-order")
-    public OrderResponse createOrder(@RequestBody OrderRequest request) {
+    public OrderResponse createOrder(@Valid @RequestBody OrderRequest request) {
         return orderService.createOrder(request);
     }
 

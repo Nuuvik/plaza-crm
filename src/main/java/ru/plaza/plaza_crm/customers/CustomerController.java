@@ -1,5 +1,6 @@
 package ru.plaza.plaza_crm.customers;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,7 +32,7 @@ public class CustomerController {
     }
 
     @PostMapping("/add-customer")
-    public CustomerResponse createCustomer(@RequestBody CustomerRequest customerRequest) {
+    public CustomerResponse createCustomer(@Valid @RequestBody CustomerRequest customerRequest) {
         return customerService.createCustomer(customerRequest);
     }
 }
