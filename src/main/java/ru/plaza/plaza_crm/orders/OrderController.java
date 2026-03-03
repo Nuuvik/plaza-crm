@@ -47,4 +47,14 @@ public class OrderController {
     public OrderResponse cancelOrder(@PathVariable Long id) {
         return orderService.cancelOrder(id);
     }
+
+    @PatchMapping("/{id}/pay")
+    public OrderResponse payOrder(@PathVariable Long id) {
+        return orderService.payOrder(id);
+    }
+
+    @PatchMapping("/{id}/ship")
+    public OrderResponse shipOrder(@PathVariable Long id) {
+        return orderService.shipOrder(id);
+    }
 }

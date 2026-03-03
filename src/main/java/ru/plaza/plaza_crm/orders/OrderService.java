@@ -87,4 +87,22 @@ public class OrderService {
         order.cancel();
         return OrderMapper.toResponse(order);
     }
+
+    @Transactional
+    public OrderResponse payOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        order.markAsPaid();
+        return OrderMapper.toResponse(order);
+    }
+
+    @Transactional
+    public OrderResponse shipOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        order.ship();
+        return OrderMapper.toResponse(order);
+    }
 }

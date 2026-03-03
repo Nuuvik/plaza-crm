@@ -4,12 +4,14 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
@@ -30,7 +32,11 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    //Optimistic locking
+    @Version
+    private Long version;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     private Customer customer;
 
     @CreationTimestamp
@@ -42,41 +48,64 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
-    private BigDecimal totalAmount = BigDecimal.valueOf(0);
+    private BigDecimal totalAmount = BigDecimal.ZERO;
 
 
     public void addItem(OrderItem item) {
         items.add(item);
         item.setOrder(this);
-
-        BigDecimal itemTotal = item.getUnitPrice()
-                .multiply(BigDecimal.valueOf(item.getQuantity()));
-
-        totalAmount = totalAmount.add(itemTotal);
+        recalculateTotal();
     }
 
     public void removeItem(OrderItem item) {
         items.remove(item);
         item.setOrder(null);
+        recalculateTotal();
     }
 
     public void confirm() {
         if (status != OrderStatus.NEW) {
-            throw new BadRequestException("Cannot confirm order");
+            throw new BadRequestException("Only NEW orders can be confirmed");
         }
-        status = OrderStatus.CONFIRMED;
+        this.status = OrderStatus.CONFIRMED;
+    }
+
+    public void markAsPaid() {
+        if (status != OrderStatus.CONFIRMED) {
+            throw new BadRequestException("Order must be confirmed before payment");
+        }
+        this.status = OrderStatus.PAID;
+    }
+
+    public void ship() {
+        if (status != OrderStatus.PAID) {
+            throw new BadRequestException("Order must be paid before shipping");
+        }
+        this.status = OrderStatus.SHIPPED;
     }
 
     public void cancel() {
+
         if (status == OrderStatus.CANCELLED) {
-            throw new BadRequestException("Already cancelled");
+            throw new BadRequestException("Order already cancelled");
         }
 
+        if (status == OrderStatus.SHIPPED) {
+            throw new BadRequestException("Shipped orders cannot be cancelled");
+        }
+
+        // Возвращаем stock
         for (OrderItem item : items) {
             item.getProduct().increaseStock(item.getQuantity());
         }
-        status = OrderStatus.CANCELLED;
+
+        this.status = OrderStatus.CANCELLED;
     }
 
-
+    public void recalculateTotal() {
+        totalAmount = items.stream()
+                .map(i -> i.getUnitPrice()
+                        .multiply(BigDecimal.valueOf(i.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }
