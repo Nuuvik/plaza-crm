@@ -5,6 +5,7 @@ import java.util.List;
 public class OrderMapper {
     public static OrderResponse toResponse(Order order) {
         List<OrderItemResponse> items = order.getItems().stream()
+                .filter(i -> !Boolean.TRUE.equals(i.getDeleted()))
                 .map(OrderItemMapper::toResponse)
                 .toList();
 

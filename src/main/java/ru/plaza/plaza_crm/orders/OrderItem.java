@@ -10,6 +10,7 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import ru.plaza.plaza_crm.products.Product;
+import ru.plaza.plaza_crm.util.BaseEntity;
 
 import java.math.BigDecimal;
 
@@ -17,7 +18,7 @@ import java.math.BigDecimal;
 @Table(name = "order_items")
 @Getter
 @Setter
-public class OrderItem {
+public class OrderItem extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

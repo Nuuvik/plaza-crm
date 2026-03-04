@@ -27,15 +27,10 @@ public class ProductService {
         return mapToResponse(product);
     }
 
-    public Page<ProductResponse> findAll(Pageable pageable) {
-        return repository.findAll(pageable).map(this::mapToResponse);
-    }
-
     public Page<ProductResponse> findAll(String car, Pageable pageable) {
-
         Page<Product> page = (car == null)
-                ? repository.findAll(pageable)
-                : repository.findByCar(car, pageable);
+                ? repository.findByDeletedFalse(pageable)
+                : repository.findByCarAndDeletedFalse(car, pageable);
 
         return page.map(this::mapToResponse);
     }

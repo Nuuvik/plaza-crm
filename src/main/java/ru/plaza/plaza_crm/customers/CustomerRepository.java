@@ -9,7 +9,8 @@ import org.springframework.data.repository.query.Param;
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
     @Query("""
             SELECT c FROM Customer c
-            WHERE (CAST(:name AS string) IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')))
+            WHERE c.deleted = false
+            AND (CAST(:name AS string) IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')))
             AND (CAST(:phone AS string) IS NULL OR c.phone LIKE CONCAT('%', CAST(:phone AS string), '%'))
             AND (CAST(:email AS string) IS NULL OR LOWER(c.email) LIKE LOWER(CONCAT('%', CAST(:email AS string), '%')))
             """)

@@ -7,15 +7,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.time.LocalDateTime;
+import ru.plaza.plaza_crm.util.BaseEntity;
 
 @Entity
 @Table(name = "customers")
 @Getter
 @Setter
-public class Customer {
+public class Customer extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,7 +22,4 @@ public class Customer {
     private String phone;
     private String telegram;
     private String address;
-
-    @CreationTimestamp
-    private LocalDateTime createdAt;
 }

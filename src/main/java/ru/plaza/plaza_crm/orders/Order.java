@@ -14,12 +14,12 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
 import ru.plaza.plaza_crm.customers.Customer;
+import ru.plaza.plaza_crm.products.Product;
+import ru.plaza.plaza_crm.util.BaseEntity;
 import ru.plaza.plaza_crm.util.exception.BadRequestException;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +27,7 @@ import java.util.List;
 @Table(name = "orders")
 @Getter
 @Setter
-public class Order {
+public class Order extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -39,9 +39,6 @@ public class Order {
     @ManyToOne(fetch = FetchType.LAZY)
     private Customer customer;
 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
-
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
@@ -49,19 +46,6 @@ public class Order {
     private List<OrderItem> items = new ArrayList<>();
 
     private BigDecimal totalAmount = BigDecimal.ZERO;
-
-
-    public void addItem(OrderItem item) {
-        items.add(item);
-        item.setOrder(this);
-        recalculateTotal();
-    }
-
-    public void removeItem(OrderItem item) {
-        items.remove(item);
-        item.setOrder(null);
-        recalculateTotal();
-    }
 
     public void confirm() {
         if (status != OrderStatus.NEW) {
@@ -104,8 +88,88 @@ public class Order {
 
     public void recalculateTotal() {
         totalAmount = items.stream()
+                .filter(i -> !Boolean.TRUE.equals(i.getDeleted()))
                 .map(i -> i.getUnitPrice()
                         .multiply(BigDecimal.valueOf(i.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public void removeItem(Long productId) {
+
+        ensureEditable();
+
+        OrderItem item = findActiveItemByProduct(productId);
+
+        if (item == null) {
+            throw new BadRequestException("Item not found in order");
+        }
+
+        item.setDeleted(true);
+
+        item.getProduct().increaseStock(item.getQuantity());
+
+        recalculateTotal();
+    }
+
+    private void ensureEditable() {
+        if (status != OrderStatus.NEW) {
+            throw new BadRequestException("Only NEW orders can be modified");
+        }
+    }
+
+    public OrderItem findActiveItemByProduct(Long productId) {
+        return items.stream()
+                .filter(i -> !Boolean.TRUE.equals(i.getDeleted()))
+                .filter(i -> i.getProduct().getId().equals(productId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public void addOrIncreaseItem(Product product, int quantity) {
+
+        ensureEditable();
+
+        OrderItem existing = findActiveItemByProduct(product.getId());
+
+        if (existing != null) {
+            updateItemQuantity(product.getId(), existing.getQuantity() + quantity);
+            return;
+        }
+
+        product.decreaseStock(quantity);
+
+        OrderItem item = new OrderItem();
+        item.setProduct(product);
+        item.setQuantity(quantity);
+        item.setUnitPrice(product.getPrice());
+
+        items.add(item);
+        item.setOrder(this);
+
+        recalculateTotal();
+    }
+
+    public void updateItemQuantity(Long productId, int newQuantity) {
+
+        ensureEditable();
+
+        OrderItem item = findActiveItemByProduct(productId);
+
+        if (item == null) {
+            throw new BadRequestException("Item not found in order");
+        }
+
+        int oldQty = item.getQuantity();
+        int diff = newQuantity - oldQty;
+
+        if (diff > 0) {
+            item.getProduct().decreaseStock(diff);
+        } else if (diff < 0) {
+            item.getProduct().increaseStock(Math.abs(diff));
+        }
+
+        item.setQuantity(newQuantity);
+
+        recalculateTotal();
     }
 }

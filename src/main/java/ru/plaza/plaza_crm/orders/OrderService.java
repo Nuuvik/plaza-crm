@@ -9,7 +9,6 @@ import ru.plaza.plaza_crm.customers.Customer;
 import ru.plaza.plaza_crm.customers.CustomerRepository;
 import ru.plaza.plaza_crm.products.Product;
 import ru.plaza.plaza_crm.products.ProductRepository;
-import ru.plaza.plaza_crm.util.exception.BadRequestException;
 import ru.plaza.plaza_crm.util.exception.ResourceNotFoundException;
 
 @Service
@@ -29,6 +28,7 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(OrderRequest request) {
+
         Customer customer = customerRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
 
@@ -37,20 +37,11 @@ public class OrderService {
         order.setStatus(OrderStatus.NEW);
 
         for (OrderItemRequest itemRequest : request.getItems()) {
+
             Product product = productRepository.findById(itemRequest.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
-            if (product.getStockQuantity() < itemRequest.getQuantity()) {
-                throw new BadRequestException("Quantity exceeds stock limit");
-            }
-            product.decreaseStock(itemRequest.getQuantity());
-
-            OrderItem item = new OrderItem();
-            item.setProduct(product);
-            item.setQuantity(itemRequest.getQuantity());
-            item.setUnitPrice(product.getPrice());
-
-            order.addItem(item);
+            order.addOrIncreaseItem(product, itemRequest.getQuantity());
         }
 
         Order saved = orderRepository.save(order);
@@ -66,10 +57,18 @@ public class OrderService {
     public Page<OrderResponse> getOrders(OrderStatus status, Pageable pageable) {
 
         Page<Order> page = (status == null)
-                ? orderRepository.findAll(pageable)
-                : orderRepository.findByStatus(status, pageable);
+                ? orderRepository.findByDeletedFalse(pageable)
+                : orderRepository.findByStatusAndDeletedFalse(status, pageable);
 
         return page.map(OrderMapper::toResponse);
+    }
+
+    @Transactional
+    public void deleteOrder(Long id) {
+        Order order = orderRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        order.setDeleted(true);
     }
 
     @Transactional
@@ -103,6 +102,42 @@ public class OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
         order.ship();
+        return OrderMapper.toResponse(order);
+    }
+
+    @Transactional
+    public OrderResponse addItem(Long orderId, Long productId, int quantity) {
+
+        Order order = orderRepository.findByIdAndDeletedFalse(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        Product product = productRepository.findByIdAndDeletedFalse(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+        order.addOrIncreaseItem(product, quantity);
+
+        return OrderMapper.toResponse(order);
+    }
+
+    @Transactional
+    public OrderResponse updateItem(Long orderId, Long productId, int quantity) {
+
+        Order order = orderRepository.findByIdAndDeletedFalse(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        order.updateItemQuantity(productId, quantity);
+
+        return OrderMapper.toResponse(order);
+    }
+
+    @Transactional
+    public OrderResponse removeItem(Long orderId, Long productId) {
+
+        Order order = orderRepository.findByIdAndDeletedFalse(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        order.removeItem(productId);
+
         return OrderMapper.toResponse(order);
     }
 }
