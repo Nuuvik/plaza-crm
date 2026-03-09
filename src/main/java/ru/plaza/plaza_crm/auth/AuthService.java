@@ -1,5 +1,7 @@
 package ru.plaza.plaza_crm.auth;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.plaza.plaza_crm.util.exception.BadRequestException;
@@ -7,6 +9,8 @@ import ru.plaza.plaza_crm.util.exception.ResourceNotFoundException;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -21,7 +25,7 @@ public class AuthService {
     }
 
     public void register(RegisterRequest request) {
-
+        log.info("Registering new user, username={}, role={}", request.getUsername(), request.getRole());
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -31,11 +35,15 @@ public class AuthService {
     }
 
     public String login(LoginRequest request) {
-
+        log.info("Logging user, username={}", request.getUsername());
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> {
+                    log.warn("User not found: username={}", request.getUsername());
+                    return new ResourceNotFoundException("User not found");
+                });
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            log.warn("Incorrect password for username={}", request.getUsername());
             throw new BadRequestException("Invalid password");
         }
 
