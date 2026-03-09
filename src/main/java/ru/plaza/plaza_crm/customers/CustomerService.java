@@ -75,6 +75,7 @@ public class CustomerService {
         customer.setEmail(request.getEmail());
         customer.setPhone(request.getPhone());
         customer.setTelegram(request.getTelegram());
+        customer.setAddress(request.getAddress());
 
         customerRepository.save(customer);
 

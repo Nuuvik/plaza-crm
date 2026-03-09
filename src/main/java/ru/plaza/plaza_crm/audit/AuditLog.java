@@ -1,16 +1,19 @@
 package ru.plaza.plaza_crm.audit;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
+import ru.plaza.plaza_crm.util.BaseEntity;
 
 @Entity
 @Table(name = "audit_logs")
 @Getter
 @Setter
-public class AuditLog {
+public class AuditLog extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,5 +27,4 @@ public class AuditLog {
 
     private String username;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
 }

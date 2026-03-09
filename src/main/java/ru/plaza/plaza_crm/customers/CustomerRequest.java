@@ -24,4 +24,6 @@ public class CustomerRequest {
 
     @Size(max = 20)
     private String telegram;
+
+    private String address;
 }

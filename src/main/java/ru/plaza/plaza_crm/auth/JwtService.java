@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -12,19 +13,21 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    // минимум 256 бит для HS256 TODO это хуета, переделать (?)
-    private static final String SECRET =
-            "ZmFrZV9zZWNyZXRfa2V5X3doaWNoX2lzX2xvbmdfZW5vdWdoXzEyMzQ1Njc4OTA=";
+    private final SecretKey key;
+    private final long expiration;
 
-    private final SecretKey key =
-            Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET));
+    public JwtService(@Value("${jwt.secret}") String secret,
+                      @Value("${jwt.expiration}") long expiration) {
+        this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+        this.expiration = expiration;
+    }
 
     public String generateToken(User user) {
         return Jwts.builder()
                 .subject(user.getUsername())
                 .claim("role", user.getRole().name())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))
+                .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(key)
                 .compact();
     }

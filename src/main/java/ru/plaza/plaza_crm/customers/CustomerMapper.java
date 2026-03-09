@@ -7,6 +7,7 @@ public class CustomerMapper {
         c.setPhone(dto.getPhone());
         c.setEmail(dto.getEmail());
         c.setTelegram(dto.getTelegram());
+        c.setAddress(dto.getAddress());
         return c;
     }
 
@@ -16,8 +17,7 @@ public class CustomerMapper {
                 c.getName(),
                 c.getEmail(),
                 c.getPhone(),
-                c.getTelegram()
-        );
+                c.getTelegram(),
+                c.getAddress());
     }
-
 }

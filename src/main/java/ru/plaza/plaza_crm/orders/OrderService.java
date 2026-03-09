@@ -69,7 +69,7 @@ public class OrderService {
 
     public OrderResponse getOrder(Long id) {
         log.info("Getting order id={}", id);
-        Order order = orderRepository.findById(id)
+        Order order = orderRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> {
                     log.warn("Order not found: id={}", id);
                     return new ResourceNotFoundException("Order not found");
