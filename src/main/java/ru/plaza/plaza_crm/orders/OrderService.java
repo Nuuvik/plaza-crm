@@ -77,13 +77,42 @@ public class OrderService {
         return OrderMapper.toResponse(order);
     }
 
-    public Page<OrderResponse> getOrders(OrderStatus status, Pageable pageable) {
+    public Page<OrderResponse> getOrders(OrderStatus status, Long customerId, Pageable pageable) {
 
-        Page<Order> page = (status == null)
-                ? orderRepository.findByDeletedFalse(pageable)
-                : orderRepository.findByStatusAndDeletedFalse(status, pageable);
+        if (customerId != null && status != null) {
+            return orderRepository
+                    .findByCustomerIdAndStatusAndDeletedFalse(customerId, status, pageable)
+                    .map(OrderMapper::toResponse);
+        }
 
-        return page.map(OrderMapper::toResponse);
+        if (customerId != null) {
+            return orderRepository
+                    .findByCustomerIdAndDeletedFalse(customerId, pageable)
+                    .map(OrderMapper::toResponse);
+        }
+
+        if (status != null) {
+            return orderRepository
+                    .findByStatusAndDeletedFalse(status, pageable)
+                    .map(OrderMapper::toResponse);
+        }
+
+        return orderRepository
+                .findByDeletedFalse(pageable)
+                .map(OrderMapper::toResponse);
+    }
+
+    public Page<OrderResponse> getOrdersByCustomer(Long customerId, Pageable pageable) {
+        log.info("Getting orders for customerId={}", customerId);
+
+        if (!customerRepository.existsById(customerId)) {
+            log.warn("Customer not found: id={}", customerId);
+            throw new ResourceNotFoundException("Customer not found");
+        }
+
+        return orderRepository
+                .findByCustomerIdAndDeletedFalse(customerId, pageable)
+                .map(OrderMapper::toResponse);
     }
 
     @Transactional

@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import ru.plaza.plaza_crm.audit.AuditService;
 import ru.plaza.plaza_crm.util.exception.BadRequestException;
 import ru.plaza.plaza_crm.util.exception.ResourceNotFoundException;
 
@@ -15,13 +16,15 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final AuditService auditService;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
-                       JwtService jwtService) {
+                       JwtService jwtService, AuditService auditService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.auditService = auditService;
     }
 
     public void register(RegisterRequest request) {
@@ -48,5 +51,39 @@ public class AuthService {
         }
 
         return jwtService.generateToken(user);
+    }
+
+    public void changeOwnPassword(String username, ChangePasswordRequest request) {
+        log.info("Changing password for username={}", username);
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            log.warn("Incorrect current password for username={}", username);
+            throw new BadRequestException("Current password is incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        auditService.log("USER", user.getId(), "CHANGE_PASSWORD");
+        log.info("Password changed for username={}", username);
+    }
+
+    public void changePasswordById(Long id, AdminChangePasswordRequest request) {
+        log.info("Admin changing password for userId={}", id);
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("User not found: id={}", id);
+                    return new ResourceNotFoundException("User not found");
+                });
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        auditService.log("USER", id, "ADMIN_CHANGE_PASSWORD");
+        log.info("Password changed for userId={}", id);
     }
 }

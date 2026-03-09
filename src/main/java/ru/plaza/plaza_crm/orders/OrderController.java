@@ -36,8 +36,9 @@ public class OrderController {
     }
 
     @GetMapping
-    public Page<OrderResponse> getOrders(@RequestParam(required = false) OrderStatus status, Pageable pageable) {
-        return orderService.getOrders(status, pageable);
+    public Page<OrderResponse> getOrders(@RequestParam(required = false) OrderStatus status,
+                                         @RequestParam(required = false) Long customerId, Pageable pageable) {
+        return orderService.getOrders(status, customerId, pageable);
     }
 
     @DeleteMapping("/{id}")

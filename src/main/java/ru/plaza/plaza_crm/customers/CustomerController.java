@@ -13,15 +13,19 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import ru.plaza.plaza_crm.orders.OrderResponse;
+import ru.plaza.plaza_crm.orders.OrderService;
 
 @RestController
 @RequestMapping("/customers")
 public class CustomerController {
     private final CustomerService customerService;
+    private final OrderService orderService;
 
     @Autowired
-    public CustomerController(CustomerService customerService) {
+    public CustomerController(CustomerService customerService, OrderService orderService) {
         this.customerService = customerService;
+        this.orderService = orderService;
     }
 
     @GetMapping
@@ -48,5 +52,10 @@ public class CustomerController {
     @DeleteMapping("/{id}")
     public void deleteCustomer(@PathVariable Long id) {
         customerService.deleteCustomer(id);
+    }
+
+    @GetMapping("/{id}/orders")
+    public Page<OrderResponse> getCustomerOrders(@PathVariable Long id, Pageable pageable) {
+        return orderService.getOrdersByCustomer(id, pageable);
     }
 }
