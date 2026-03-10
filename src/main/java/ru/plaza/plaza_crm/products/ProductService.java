@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.plaza.plaza_crm.audit.AuditService;
+import ru.plaza.plaza_crm.util.exception.BadRequestException;
 import ru.plaza.plaza_crm.util.exception.ResourceNotFoundException;
 
 @Service
@@ -26,7 +27,13 @@ public class ProductService {
 
         log.info("Creating product {}", request.getName());
 
+        if (repository.existsBySkuAndDeletedFalse(request.getSku())) {
+            log.warn("SKU already in use: sku={}", request.getSku());
+            throw new BadRequestException("Product with this SKU already exists");
+        }
+
         Product product = new Product();
+        product.setSku(request.getSku());
         product.setName(request.getName());
         product.setPrice(request.getPrice());
         product.setCar(request.getCar());
@@ -40,26 +47,6 @@ public class ProductService {
         return mapToResponse(saved);
     }
 
-    public Page<ProductResponse> findAll(String car, Pageable pageable) {
-
-        Page<Product> page = (car == null)
-                ? repository.findByDeletedFalse(pageable)
-                : repository.findByCarAndDeletedFalse(car, pageable);
-
-        return page.map(this::mapToResponse);
-    }
-
-    public ProductResponse findById(Long id) {
-
-        Product product = repository.findByIdAndDeletedFalse(id)
-                .orElseThrow(() -> {
-                    log.warn("Product not found: id={}", id);
-                    return new ResourceNotFoundException("Product not found");
-                });
-
-        return mapToResponse(product);
-    }
-
     @Transactional
     public ProductResponse update(Long id, ProductRequest request) {
 
@@ -71,6 +58,12 @@ public class ProductService {
                     return new ResourceNotFoundException("Product not found");
                 });
 
+        if (repository.existsBySkuAndIdNotAndDeletedFalse(request.getSku(), id)) {
+            log.warn("SKU already in use: sku={}", request.getSku());
+            throw new BadRequestException("Product with this SKU already exists");
+        }
+
+        product.setSku(request.getSku());
         product.setName(request.getName());
         product.setPrice(request.getPrice());
         product.setCar(request.getCar());
@@ -96,9 +89,40 @@ public class ProductService {
         auditService.log("PRODUCT", id, "DELETE");
     }
 
+
+    public Page<ProductResponse> findAll(String car, Pageable pageable) {
+
+        Page<Product> page = (car == null)
+                ? repository.findByDeletedFalse(pageable)
+                : repository.findByCarAndDeletedFalse(car, pageable);
+
+        return page.map(this::mapToResponse);
+    }
+
+    public ProductResponse findById(Long id) {
+
+        Product product = repository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> {
+                    log.warn("Product not found: id={}", id);
+                    return new ResourceNotFoundException("Product not found");
+                });
+
+        return mapToResponse(product);
+    }
+
+    public ProductResponse findBySku(String sku) {
+        Product product = repository.findBySkuAndDeletedFalse(sku)
+                .orElseThrow(() -> {
+                    log.warn("Product not found: sku={}", sku);
+                    return new ResourceNotFoundException("Product not found");
+                });
+        return mapToResponse(product);
+    }
+
     private ProductResponse mapToResponse(Product product) {
         return new ProductResponse(
                 product.getId(),
+                product.getSku(),
                 product.getName(),
                 product.getPrice(),
                 product.getCar(),

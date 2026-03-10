@@ -12,4 +12,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findByCarAndDeletedFalse(String car, Pageable pageable);
 
     Optional<Product> findByIdAndDeletedFalse(Long id);
+
+    Optional<Product> findBySkuAndDeletedFalse(String sku);
+
+    boolean existsBySkuAndDeletedFalse(String sku);
+
+    boolean existsBySkuAndIdNotAndDeletedFalse(String sku, Long id);
 }

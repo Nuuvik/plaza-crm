@@ -21,6 +21,10 @@ public class Product extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(unique = true)
+    private String sku;
+
     private String name;
     private BigDecimal price;
     private String car; //TODO переделать под класс Car когда появится
