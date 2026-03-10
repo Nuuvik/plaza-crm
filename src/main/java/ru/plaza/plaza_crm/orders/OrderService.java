@@ -125,6 +125,7 @@ public class OrderService {
                 });
 
         order.setDeleted(true);
+        auditService.log("ORDER", id, "DELETE");
     }
 
     @Transactional

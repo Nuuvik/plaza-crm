@@ -88,6 +88,7 @@ public class CustomerService {
         return CustomerMapper.toResponse(customer);
     }
 
+    @Transactional
     public void deleteCustomer(Long id) {
         log.info("Deleting customer id={}", id);
 

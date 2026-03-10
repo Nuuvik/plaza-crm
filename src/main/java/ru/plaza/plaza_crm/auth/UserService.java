@@ -32,11 +32,21 @@ public class UserService {
         return toResponse(user);
     }
 
+    public UserResponse findByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> {
+                    log.warn("User not found: username={}", username);
+                    return new ResourceNotFoundException("User not found");
+                });
+        return toResponse(user);
+    }
+
     private UserResponse toResponse(User user) {
         return new UserResponse(
                 user.getId(),
                 user.getUsername(),
-                user.getRole()
+                user.getRole(),
+                user.getCreatedAt()
         );
     }
 }

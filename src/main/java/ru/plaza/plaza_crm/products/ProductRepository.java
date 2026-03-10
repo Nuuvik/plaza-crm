@@ -3,13 +3,12 @@ package ru.plaza.plaza_crm.products;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
-    Page<Product> findByDeletedFalse(Pageable pageable);
-
-    Page<Product> findByCarAndDeletedFalse(String car, Pageable pageable);
 
     Optional<Product> findByIdAndDeletedFalse(Long id);
 
@@ -18,4 +17,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     boolean existsBySkuAndDeletedFalse(String sku);
 
     boolean existsBySkuAndIdNotAndDeletedFalse(String sku, Long id);
+
+    @Query("""
+            SELECT p FROM Product p
+            WHERE p.deleted = false
+            AND (CAST(:car AS string) IS NULL OR p.car = CAST(:car AS string))
+            AND (CAST(:name AS string) IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')))
+            AND (CAST(:sku AS string) IS NULL OR LOWER(p.sku) LIKE LOWER(CONCAT('%', CAST(:sku AS string), '%')))
+            """)
+    Page<Product> search(@Param("car") String car,
+                         @Param("name") String name,
+                         @Param("sku") String sku,
+                         Pageable pageable);
 }

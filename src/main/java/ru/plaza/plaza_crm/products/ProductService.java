@@ -23,6 +23,7 @@ public class ProductService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public ProductResponse create(ProductRequest request) {
 
         log.info("Creating product {}", request.getName());
@@ -90,13 +91,10 @@ public class ProductService {
     }
 
 
-    public Page<ProductResponse> findAll(String car, Pageable pageable) {
-
-        Page<Product> page = (car == null)
-                ? repository.findByDeletedFalse(pageable)
-                : repository.findByCarAndDeletedFalse(car, pageable);
-
-        return page.map(this::mapToResponse);
+    // СТАЛО — один универсальный вызов
+    public Page<ProductResponse> findAll(String car, String name, String sku, Pageable pageable) {
+        return repository.search(car, name, sku, pageable)
+                .map(this::mapToResponse);
     }
 
     public ProductResponse findById(Long id) {

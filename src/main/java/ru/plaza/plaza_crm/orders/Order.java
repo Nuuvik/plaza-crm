@@ -80,7 +80,9 @@ public class Order extends BaseEntity {
 
         // Возвращаем stock
         for (OrderItem item : items) {
-            item.getProduct().increaseStock(item.getQuantity());
+            if (!Boolean.TRUE.equals(item.getDeleted())) {
+                item.getProduct().increaseStock(item.getQuantity());
+            }
         }
 
         this.status = OrderStatus.CANCELLED;

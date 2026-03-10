@@ -25,8 +25,9 @@ public class ProductController {
 
 
     @GetMapping
-    public Page<ProductResponse> getAll(@RequestParam(required = false) String car, Pageable pageable) {
-        return service.findAll(car, pageable);
+    public Page<ProductResponse> getAll(@RequestParam(required = false) String car, @RequestParam(required = false) String name,
+                                        @RequestParam(required = false) String sku, Pageable pageable) {
+        return service.findAll(car, name, sku, pageable);
     }
 
     @GetMapping("/{id}")
