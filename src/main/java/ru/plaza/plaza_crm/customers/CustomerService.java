@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.plaza.plaza_crm.audit.AuditService;
 import ru.plaza.plaza_crm.util.exception.BadRequestException;
 import ru.plaza.plaza_crm.util.exception.ResourceNotFoundException;
@@ -38,6 +39,7 @@ public class CustomerService {
         return CustomerMapper.toResponse(customer);
     }
 
+    @Transactional
     public CustomerResponse createCustomer(CustomerRequest request) {
         log.info("Creating customer {}", request.getName());
 
@@ -62,6 +64,7 @@ public class CustomerService {
         return CustomerMapper.toResponse(customer);
     }
 
+    @Transactional
     public CustomerResponse updateCustomer(Long id, CustomerRequest request) {
         log.info("Updating customer id={}", id);
 

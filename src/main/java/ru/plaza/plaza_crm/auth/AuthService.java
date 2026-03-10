@@ -29,12 +29,19 @@ public class AuthService {
 
     public void register(RegisterRequest request) {
         log.info("Registering new user, username={}, role={}", request.getUsername(), request.getRole());
+
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            log.warn("Username already taken: {}", request.getUsername());
+            throw new BadRequestException("Username already taken");
+        }
+
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
 
         userRepository.save(user);
+        auditService.log("USER", user.getId(), "REGISTER");
     }
 
     public String login(LoginRequest request) {
@@ -49,6 +56,8 @@ public class AuthService {
             log.warn("Incorrect password for username={}", request.getUsername());
             throw new BadRequestException("Invalid password");
         }
+
+        auditService.log("USER", user.getId(), "LOGIN");
 
         return jwtService.generateToken(user);
     }

@@ -37,7 +37,7 @@ public class OrderService {
     @Transactional
     public OrderResponse createOrder(OrderRequest request) {
         log.info("Creating order for customerId={}", request.getCustomerId());
-        Customer customer = customerRepository.findById(request.getCustomerId())
+        Customer customer = customerRepository.findByIdAndDeletedFalse(request.getCustomerId())
                 .orElseThrow(() -> {
                     log.warn("Customer not found: id={}", request.getCustomerId());
                     return new ResourceNotFoundException("Customer not found");
@@ -49,7 +49,7 @@ public class OrderService {
 
         for (OrderItemRequest itemRequest : request.getItems()) {
             log.info("Adding productId={} quantity={}", itemRequest.getProductId(), itemRequest.getQuantity());
-            Product product = productRepository.findById(itemRequest.getProductId())
+            Product product = productRepository.findByIdAndDeletedFalse(itemRequest.getProductId())
                     .orElseThrow(() -> {
                         log.warn("Product not found: id={}", itemRequest.getProductId());
                         return new ResourceNotFoundException("Product not found");
@@ -105,7 +105,7 @@ public class OrderService {
     public Page<OrderResponse> getOrdersByCustomer(Long customerId, Pageable pageable) {
         log.info("Getting orders for customerId={}", customerId);
 
-        if (!customerRepository.existsById(customerId)) {
+        if (!customerRepository.existsByIdAndDeletedFalse(customerId)) {
             log.warn("Customer not found: id={}", customerId);
             throw new ResourceNotFoundException("Customer not found");
         }
@@ -131,7 +131,7 @@ public class OrderService {
     public OrderResponse confirmOrder(Long id) {
         log.info("Confirming order id={}", id);
 
-        Order order = orderRepository.findById(id)
+        Order order = orderRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> {
                     log.warn("Order not found: id={}", id);
                     return new ResourceNotFoundException("Order not found");
@@ -149,7 +149,7 @@ public class OrderService {
     @Transactional
     public OrderResponse cancelOrder(Long id) {
         log.info("Cancelling order id={}", id);
-        Order order = orderRepository.findById(id)
+        Order order = orderRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> {
                     log.warn("Order not found: id={}", id);
                     return new ResourceNotFoundException("Order not found");
@@ -162,7 +162,7 @@ public class OrderService {
     @Transactional
     public OrderResponse payOrder(Long id) {
         log.info("Paying order id={}", id);
-        Order order = orderRepository.findById(id)
+        Order order = orderRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> {
                     log.warn("Order not found: id={}", id);
                     return new ResourceNotFoundException("Order not found");
@@ -176,7 +176,7 @@ public class OrderService {
     @Transactional
     public OrderResponse shipOrder(Long id) {
         log.info("Shipping order id={}", id);
-        Order order = orderRepository.findById(id)
+        Order order = orderRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> {
                     log.warn("Order not found: id={}", id);
                     return new ResourceNotFoundException("Order not found");
