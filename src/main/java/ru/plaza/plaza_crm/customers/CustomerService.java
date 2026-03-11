@@ -24,11 +24,13 @@ public class CustomerService {
         this.auditService = auditService;
     }
 
+    @Transactional(readOnly = true)
     public Page<CustomerResponse> findAll(String name, String phone, String email, Pageable pageable) {
         return customerRepository.search(name, phone, email, pageable)
                 .map(CustomerMapper::toResponse);
     }
 
+    @Transactional(readOnly = true)
     public CustomerResponse getCustomerById(Long id) {
         Customer customer = customerRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> {

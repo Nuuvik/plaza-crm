@@ -67,6 +67,7 @@ public class OrderService {
         return OrderMapper.toResponse(saved);
     }
 
+    @Transactional(readOnly = true)
     public OrderResponse getOrder(Long id) {
         log.info("Getting order id={}", id);
         Order order = orderRepository.findByIdAndDeletedFalse(id)
@@ -77,6 +78,7 @@ public class OrderService {
         return OrderMapper.toResponse(order);
     }
 
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getOrders(OrderStatus status, Long customerId, Pageable pageable) {
 
         if (customerId != null && status != null) {
@@ -102,6 +104,7 @@ public class OrderService {
                 .map(OrderMapper::toResponse);
     }
 
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getOrdersByCustomer(Long customerId, Pageable pageable) {
         log.info("Getting orders for customerId={}", customerId);
 

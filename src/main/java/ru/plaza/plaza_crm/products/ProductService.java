@@ -91,12 +91,13 @@ public class ProductService {
     }
 
 
-    // СТАЛО — один универсальный вызов
+    @Transactional(readOnly = true)
     public Page<ProductResponse> findAll(String car, String name, String sku, Pageable pageable) {
         return repository.search(car, name, sku, pageable)
                 .map(this::mapToResponse);
     }
 
+    @Transactional(readOnly = true)
     public ProductResponse findById(Long id) {
 
         Product product = repository.findByIdAndDeletedFalse(id)
@@ -108,6 +109,7 @@ public class ProductService {
         return mapToResponse(product);
     }
 
+    @Transactional(readOnly = true)
     public ProductResponse findBySku(String sku) {
         Product product = repository.findBySkuAndDeletedFalse(sku)
                 .orElseThrow(() -> {
