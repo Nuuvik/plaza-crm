@@ -74,6 +74,18 @@ public class CustomerService {
                     return new ResourceNotFoundException("Customer not found");
                 });
 
+        if (request.getPhone() != null &&
+                customerRepository.existsByPhoneAndIdNotAndDeletedFalse(request.getPhone(), id)) {
+            log.warn("Phone number already in use: phone={}", request.getPhone());
+            throw new BadRequestException("Customer with this phone already exists");
+        }
+
+        if (request.getEmail() != null &&
+                customerRepository.existsByEmailAndIdNotAndDeletedFalse(request.getEmail(), id)) {
+            log.warn("Email already in use: email={}", request.getEmail());
+            throw new BadRequestException("Customer with this email already exists");
+        }
+
         customer.setName(request.getName());
         customer.setEmail(request.getEmail());
         customer.setPhone(request.getPhone());

@@ -8,6 +8,7 @@ public class OrderItemMapper {
 
         return new OrderItemResponse(
                 item.getProduct().getId(),
+                item.getProduct().getSku(),
                 item.getProduct().getName(),
                 item.getQuantity(),
                 item.getUnitPrice(),
