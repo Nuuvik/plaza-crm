@@ -33,7 +33,7 @@ public class DataInitializer implements ApplicationRunner {
             admin.setRole(Role.ADMIN);
             userRepository.save(admin);
 
-            auditService.log("USER", admin.getId(), "SYSTEM_INIT");
+            auditService.log("USER", admin.getId(), "SYSTEM_INIT", "system");
             log.info("Default admin created: username=admin, password=admin123 — CHANGE IMMEDIATELY");
         }
     }

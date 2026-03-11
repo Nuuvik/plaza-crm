@@ -28,6 +28,7 @@ public class AuthService {
         this.auditService = auditService;
     }
 
+    @Transactional
     public void register(RegisterRequest request) {
         log.info("Registering new user, username={}, role={}", request.getUsername(), request.getRole());
 
