@@ -28,6 +28,7 @@ public class SecurityConfig {
                         .requestMatchers("/users/me").authenticated()
                         .requestMatchers("/users/**").hasRole("ADMIN")
                         .requestMatchers("/auth/register").hasRole("ADMIN")
+                        .requestMatchers("/audit-logs/**").hasRole("ADMIN")
                         .requestMatchers("/customers/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/orders/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/products/**").hasRole("ADMIN")
