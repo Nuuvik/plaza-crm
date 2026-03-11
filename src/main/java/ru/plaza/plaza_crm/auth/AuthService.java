@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.plaza.plaza_crm.audit.AuditService;
 import ru.plaza.plaza_crm.util.exception.BadRequestException;
 import ru.plaza.plaza_crm.util.exception.ResourceNotFoundException;
@@ -62,6 +63,7 @@ public class AuthService {
         return jwtService.generateToken(user);
     }
 
+    @Transactional
     public void changeOwnPassword(String username, ChangePasswordRequest request) {
         log.info("Changing password for username={}", username);
 
@@ -80,6 +82,7 @@ public class AuthService {
         log.info("Password changed for username={}", username);
     }
 
+    @Transactional
     public void changePasswordById(Long id, AdminChangePasswordRequest request) {
         log.info("Admin changing password for userId={}", id);
 

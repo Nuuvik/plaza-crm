@@ -19,7 +19,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
                 .csrf(csrf -> csrf.disable())
@@ -31,7 +31,7 @@ public class SecurityConfig {
                         .requestMatchers("/audit-logs/**").hasRole("ADMIN")
                         .requestMatchers("/customers/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/orders/**").hasAnyRole("ADMIN", "MANAGER")
-                        .requestMatchers("/products/**").hasRole("ADMIN")
+                        .requestMatchers("/products/**").hasAnyRole("ADMIN", "MANAGER")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

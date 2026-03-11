@@ -6,6 +6,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import ru.plaza.plaza_crm.audit.AuditService;
 
 @Component
 public class DataInitializer implements ApplicationRunner {
@@ -14,11 +15,13 @@ public class DataInitializer implements ApplicationRunner {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditService auditService;
 
     public DataInitializer(UserRepository userRepository,
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder, AuditService auditService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditService = auditService;
     }
 
     @Override
@@ -29,6 +32,8 @@ public class DataInitializer implements ApplicationRunner {
             admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setRole(Role.ADMIN);
             userRepository.save(admin);
+
+            auditService.log("USER", admin.getId(), "SYSTEM_INIT");
             log.info("Default admin created: username=admin, password=admin123 — CHANGE IMMEDIATELY");
         }
     }

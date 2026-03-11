@@ -12,9 +12,6 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
             SELECT a FROM AuditLog a
             WHERE (CAST(:entityType AS string) IS NULL OR a.entityType = CAST(:entityType AS string))
             AND (CAST(:username AS string) IS NULL OR a.username = CAST(:username AS string))
-            ORDER BY a.createdAt DESC
             """)
-    Page<AuditLog> search(@Param("entityType") String entityType,
-                          @Param("username") String username,
-                          Pageable pageable);
+    Page<AuditLog> search(@Param("entityType") String entityType, @Param("username") String username, Pageable pageable);
 }
