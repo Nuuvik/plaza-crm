@@ -46,8 +46,7 @@ public class OrderService {
                 });
 
         Order order = new Order();
-        order.setCustomer(customer);
-        order.setStatus(OrderStatus.NEW);
+        order.initAsNew(customer);
 
         for (OrderItemRequest itemRequest : request.getItems()) {
             log.info("Adding productId={} quantity={}", itemRequest.getProductId(), itemRequest.getQuantity());

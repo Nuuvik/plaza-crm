@@ -27,7 +27,6 @@ import java.util.List;
 @Entity
 @Table(name = "orders")
 @Getter
-@Setter
 public class Order extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,19 +36,29 @@ public class Order extends BaseEntity {
     @Version
     private Long version;
 
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     private Customer customer;
 
+    //нет @Setter чтобы случайно не было доступа к изменению поля
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
+    @Setter
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
+    @Setter
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
+    @Setter
     @Column(length = 1000)
     private String notes;
+
+    public void initAsNew(Customer customer) {
+        this.customer = customer;
+        this.status = OrderStatus.NEW;
+    }
 
     public void confirm() {
         if (status != OrderStatus.NEW) {
