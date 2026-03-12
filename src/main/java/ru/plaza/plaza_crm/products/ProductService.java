@@ -87,6 +87,7 @@ public class ProductService {
                 });
 
         product.setDeleted(true);
+        repository.save(product);
         auditService.log("PRODUCT", id, "DELETE");
     }
 

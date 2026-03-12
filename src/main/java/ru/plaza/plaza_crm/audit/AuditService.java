@@ -14,6 +14,7 @@ public class AuditService {
         this.repository = repository;
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(String entityType, Long entityId, String action, String username) {
         AuditLog log = new AuditLog();
         log.setEntityType(entityType);

@@ -111,6 +111,7 @@ public class OrderService {
                 });
 
         order.setDeleted(true);
+        orderRepository.save(order);
         auditService.log("ORDER", id, "DELETE");
     }
 
