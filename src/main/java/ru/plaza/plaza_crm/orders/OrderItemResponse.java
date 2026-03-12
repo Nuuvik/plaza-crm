@@ -2,12 +2,10 @@ package ru.plaza.plaza_crm.orders;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 
 @Getter
-@Setter
 @AllArgsConstructor
 public class OrderItemResponse {
     private Long productId;

@@ -12,7 +12,6 @@ import ru.plaza.plaza_crm.util.BaseEntity;
 @Entity
 @Table(name = "audit_logs")
 @Getter
-@Setter
 public class AuditLog extends BaseEntity {
 
     @Id
@@ -27,4 +26,19 @@ public class AuditLog extends BaseEntity {
 
     private String username;
 
+    public void setEntityType(String entityType) {
+        this.entityType = entityType;
+    }
+
+    public void setEntityId(Long entityId) {
+        this.entityId = entityId;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
 }

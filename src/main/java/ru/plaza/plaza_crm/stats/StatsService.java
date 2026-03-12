@@ -1,5 +1,6 @@
 package ru.plaza.plaza_crm.stats;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.plaza.plaza_crm.customers.CustomerRepository;
@@ -18,6 +19,7 @@ public class StatsService {
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
 
+    @Autowired
     public StatsService(OrderRepository orderRepository, CustomerRepository customerRepository) {
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;

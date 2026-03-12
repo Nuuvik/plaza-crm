@@ -46,7 +46,7 @@ public class AuthService {
         auditService.log("USER", user.getId(), "REGISTER");
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public String login(LoginRequest request) {
         log.info("Logging user, username={}", request.getUsername());
         User user = userRepository.findByUsername(request.getUsername())
