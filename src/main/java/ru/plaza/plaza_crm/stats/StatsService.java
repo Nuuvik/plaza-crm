@@ -3,14 +3,13 @@ package ru.plaza.plaza_crm.stats;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.plaza.plaza_crm.customers.CustomerRepository;
-import ru.plaza.plaza_crm.orders.Order;
 import ru.plaza.plaza_crm.orders.OrderRepository;
 import ru.plaza.plaza_crm.orders.OrderStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,34 +25,26 @@ public class StatsService {
 
     @Transactional(readOnly = true)
     public StatsResponse getStats() {
-        LocalDateTime startOfMonth = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime startOfMonth = LocalDateTime.now()
+                .withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
 
-        List<Order> allOrders = orderRepository.findAllByDeletedFalse();
+        long totalOrders = orderRepository.countActive();
 
-        long totalOrders = allOrders.size();
+        BigDecimal totalRevenue = Optional.ofNullable(orderRepository.sumRevenue())
+                .orElse(BigDecimal.ZERO);
 
-        BigDecimal totalRevenue = allOrders.stream()
-                .filter(o -> o.getStatus() != OrderStatus.CANCELLED)
-                .map(Order::getTotalAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        Map<OrderStatus, Long> ordersByStatus = orderRepository.countByStatus()
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (OrderStatus) row[0],
+                        row -> (Long) row[1]
+                ));
 
-        Map<OrderStatus, Long> ordersByStatus = allOrders.stream()
-                .collect(Collectors.groupingBy(Order::getStatus, Collectors.counting()));
-
-        long newOrdersThisMonth = allOrders.stream()
-                .filter(o -> o.getCreatedAt() != null && o.getCreatedAt().isAfter(startOfMonth))
-                .count();
-
+        long newOrdersThisMonth = orderRepository.countCreatedAfter(startOfMonth);
         long totalCustomers = customerRepository.countByDeletedFalse();
         long newCustomersThisMonth = customerRepository.countByCreatedAtAfterAndDeletedFalse(startOfMonth);
 
-        return new StatsResponse(
-                totalOrders,
-                totalCustomers,
-                totalRevenue,
-                ordersByStatus,
-                newCustomersThisMonth,
-                newOrdersThisMonth
-        );
+        return new StatsResponse(totalOrders, totalCustomers, totalRevenue,
+                ordersByStatus, newCustomersThisMonth, newOrdersThisMonth);
     }
 }
