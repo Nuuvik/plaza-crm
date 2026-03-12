@@ -37,8 +37,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT COUNT(o) FROM Order o WHERE o.deleted = false AND o.createdAt >= :from")
     long countCreatedAfter(@Param("from") LocalDateTime from);
 
-    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.deleted = false AND o.status != 'CANCELLED'")
-    BigDecimal sumRevenue();
+    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.deleted = false AND o.status != :status")
+    BigDecimal sumRevenue(@Param("status") OrderStatus status);
 
     @Query("SELECT o.status, COUNT(o) FROM Order o WHERE o.deleted = false GROUP BY o.status")
     List<Object[]> countByStatus();

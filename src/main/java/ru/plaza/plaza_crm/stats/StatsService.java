@@ -30,7 +30,7 @@ public class StatsService {
 
         long totalOrders = orderRepository.countActive();
 
-        BigDecimal totalRevenue = Optional.ofNullable(orderRepository.sumRevenue())
+        BigDecimal totalRevenue = Optional.ofNullable(orderRepository.sumRevenue(OrderStatus.CANCELLED))
                 .orElse(BigDecimal.ZERO);
 
         Map<OrderStatus, Long> ordersByStatus = orderRepository.countByStatus()
