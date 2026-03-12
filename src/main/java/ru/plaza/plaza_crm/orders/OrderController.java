@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/orders")
@@ -39,9 +42,13 @@ public class OrderController {
     }
 
     @GetMapping
-    public Page<OrderResponse> getOrders(@RequestParam(required = false) OrderStatus status,
-                                         @RequestParam(required = false) Long customerId, Pageable pageable) {
-        return orderService.getOrders(status, customerId, pageable);
+    public Page<OrderResponse> getOrders(
+            @RequestParam(required = false) OrderStatus status,
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            Pageable pageable) {
+        return orderService.getOrders(status, customerId, from, to, pageable);
     }
 
     @DeleteMapping("/{id}")
@@ -68,6 +75,11 @@ public class OrderController {
     @PatchMapping("/{id}/ship")
     public OrderResponse shipOrder(@PathVariable Long id) {
         return orderService.shipOrder(id);
+    }
+
+    @PatchMapping("/{id}/notes")
+    public OrderResponse updateNotes(@PathVariable Long id, @Valid @RequestBody UpdateNotesRequest request) {
+        return orderService.updateNotes(id, request);
     }
 
     @PostMapping("/{id}/items")

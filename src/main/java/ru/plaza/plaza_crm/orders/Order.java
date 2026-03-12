@@ -1,6 +1,7 @@
 package ru.plaza.plaza_crm.orders;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -46,6 +47,9 @@ public class Order extends BaseEntity {
     private List<OrderItem> items = new ArrayList<>();
 
     private BigDecimal totalAmount = BigDecimal.ZERO;
+
+    @Column(length = 1000)
+    private String notes;
 
     public void confirm() {
         if (status != OrderStatus.NEW) {

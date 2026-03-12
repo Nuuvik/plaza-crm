@@ -14,6 +14,8 @@ import ru.plaza.plaza_crm.products.Product;
 import ru.plaza.plaza_crm.products.ProductRepository;
 import ru.plaza.plaza_crm.util.exception.ResourceNotFoundException;
 
+import java.time.LocalDateTime;
+
 @Service
 public class OrderService {
 
@@ -79,28 +81,9 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public Page<OrderResponse> getOrders(OrderStatus status, Long customerId, Pageable pageable) {
-
-        if (customerId != null && status != null) {
-            return orderRepository
-                    .findByCustomerIdAndStatusAndDeletedFalse(customerId, status, pageable)
-                    .map(OrderMapper::toResponse);
-        }
-
-        if (customerId != null) {
-            return orderRepository
-                    .findByCustomerIdAndDeletedFalse(customerId, pageable)
-                    .map(OrderMapper::toResponse);
-        }
-
-        if (status != null) {
-            return orderRepository
-                    .findByStatusAndDeletedFalse(status, pageable)
-                    .map(OrderMapper::toResponse);
-        }
-
-        return orderRepository
-                .findByDeletedFalse(pageable)
+    public Page<OrderResponse> getOrders(OrderStatus status, Long customerId, LocalDateTime from, LocalDateTime to,
+                                         Pageable pageable) {
+        return orderRepository.search(status, customerId, from, to, pageable)
                 .map(OrderMapper::toResponse);
     }
 
@@ -188,6 +171,22 @@ public class OrderService {
 
         order.ship();
         auditService.log("ORDER", id, "SHIP");
+        return OrderMapper.toResponse(order);
+    }
+
+    @Transactional
+    public OrderResponse updateNotes(Long id, UpdateNotesRequest request) {
+        log.info("Updating notes for orderId={}", id);
+
+        Order order = orderRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> {
+                    log.warn("Order not found: id={}", id);
+                    return new ResourceNotFoundException("Order not found");
+                });
+
+        order.setNotes(request.getNotes());
+        auditService.log("ORDER", id, "UPDATE_NOTES");
+
         return OrderMapper.toResponse(order);
     }
 

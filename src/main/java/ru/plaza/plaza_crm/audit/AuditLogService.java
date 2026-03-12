@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 public class AuditLogService {
 
@@ -15,8 +17,9 @@ public class AuditLogService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AuditLogResponse> findAll(String entityType, String username, Pageable pageable) {
-        return repository.search(entityType, username, pageable)
+    public Page<AuditLogResponse> findAll(String entityType, String username, LocalDateTime from, LocalDateTime to,
+                                          Pageable pageable) {
+        return repository.search(entityType, username, from, to, pageable)
                 .map(this::toResponse);
     }
 
