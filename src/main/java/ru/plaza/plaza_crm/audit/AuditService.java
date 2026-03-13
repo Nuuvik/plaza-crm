@@ -1,5 +1,6 @@
 package ru.plaza.plaza_crm.audit;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -10,6 +11,7 @@ public class AuditService {
 
     private final AuditLogRepository repository;
 
+    @Autowired
     public AuditService(AuditLogRepository repository) {
         this.repository = repository;
     }

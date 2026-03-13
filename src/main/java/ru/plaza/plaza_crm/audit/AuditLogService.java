@@ -1,5 +1,6 @@
 package ru.plaza.plaza_crm.audit;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ public class AuditLogService {
 
     private final AuditLogRepository repository;
 
+    @Autowired
     public AuditLogService(AuditLogRepository repository) {
         this.repository = repository;
     }

@@ -71,6 +71,7 @@ public class ProductService {
         product.setPrice(request.getPrice());
         product.setCar(request.getCar());
         product.setStockQuantity(request.getStockQuantity());
+        repository.save(product);
 
         auditService.log("PRODUCT", id, "UPDATE");
 

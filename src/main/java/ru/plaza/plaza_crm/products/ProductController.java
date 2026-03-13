@@ -1,6 +1,7 @@
 package ru.plaza.plaza_crm.products;
 
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ public class ProductController {
 
     private final ProductService service;
 
+    @Autowired
     public ProductController(ProductService service) {
         this.service = service;
     }

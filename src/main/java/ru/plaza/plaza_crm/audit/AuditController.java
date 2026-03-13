@@ -1,5 +1,6 @@
 package ru.plaza.plaza_crm.audit;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,6 +17,7 @@ public class AuditController {
 
     private final AuditLogService auditLogService;
 
+    @Autowired
     public AuditController(AuditLogService auditLogService) {
         this.auditLogService = auditLogService;
     }

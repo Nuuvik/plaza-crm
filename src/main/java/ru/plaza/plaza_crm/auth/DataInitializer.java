@@ -2,6 +2,7 @@ package ru.plaza.plaza_crm.auth;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +18,7 @@ public class DataInitializer implements ApplicationRunner {
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
 
+    @Autowired
     public DataInitializer(UserRepository userRepository,
                            PasswordEncoder passwordEncoder, AuditService auditService) {
         this.userRepository = userRepository;
