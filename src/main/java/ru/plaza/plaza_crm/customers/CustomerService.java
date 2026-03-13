@@ -45,6 +45,11 @@ public class CustomerService {
     public CustomerResponse createCustomer(CustomerRequest request) {
         log.info("Creating customer {}", request.getName());
 
+        if (customerRepository.existsByPhoneAndDeletedFalse(request.getPhone())) {
+            log.warn("Phone number already in use: phone={}", request.getPhone());
+            throw new BadRequestException("Customer with this phone already exists");
+        }
+
         if (request.getEmail() != null &&
                 customerRepository.existsByEmailAndDeletedFalse(request.getEmail())) {
             log.warn("Email already in use: email={}", request.getEmail());
