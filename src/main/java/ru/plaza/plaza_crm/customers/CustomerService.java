@@ -75,8 +75,7 @@ public class CustomerService {
                     return new ResourceNotFoundException("Customer not found");
                 });
 
-        if (request.getPhone() != null &&
-                customerRepository.existsByPhoneAndIdNotAndDeletedFalse(request.getPhone(), id)) {
+        if (customerRepository.existsByPhoneAndIdNotAndDeletedFalse(request.getPhone(), id)) {
             log.warn("Phone number already in use: phone={}", request.getPhone());
             throw new BadRequestException("Customer with this phone already exists");
         }
