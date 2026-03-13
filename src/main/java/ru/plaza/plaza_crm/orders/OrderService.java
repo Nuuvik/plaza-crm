@@ -222,6 +222,8 @@ public class OrderService {
 
         order.addOrIncreaseItem(product, quantity);
 
+        orderRepository.save(order);
+
         auditService.log("ORDERITEM", orderId, "ADD");
 
         log.info("Item added. Order id={} newTotal={}", orderId, order.getTotalAmount());
@@ -240,6 +242,8 @@ public class OrderService {
 
         order.updateItemQuantity(productId, quantity);
 
+        orderRepository.save(order);
+
         auditService.log("ORDERITEM", orderId, "UPDATE");
 
         log.info("Item updated. Order id={} productId={} newTotal={}", orderId, productId, order.getTotalAmount());
@@ -257,6 +261,8 @@ public class OrderService {
                 });
 
         order.removeItem(productId);
+
+        orderRepository.save(order);
 
         auditService.log("ORDERITEM", orderId, "DELETE");
 

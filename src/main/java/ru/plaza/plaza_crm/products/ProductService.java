@@ -53,7 +53,7 @@ public class ProductService {
     @Transactional
     public ProductResponse update(Long id, ProductRequest request) {
 
-        log.info("Updating product {}", id);
+        log.info("Updating product id={}", id);
 
         Product product = repository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> {
@@ -81,7 +81,7 @@ public class ProductService {
     @Transactional
     public void delete(Long id) {
 
-        log.info("Deleting product {}", id);
+        log.info("Deleting product id={}", id);
 
         Product product = repository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> {
