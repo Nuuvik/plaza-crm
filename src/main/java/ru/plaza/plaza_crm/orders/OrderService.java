@@ -246,7 +246,7 @@ public class OrderService {
 
     @Transactional
     public OrderResponse removeItem(Long orderId, Long productId) {
-        log.info("Removing item from orderId={} productId={} ", orderId, productId);
+        log.info("Removing item from orderId={} productId={}", orderId, productId);
         Order order = orderRepository.findByIdAndDeletedFalse(orderId)
                 .orElseThrow(() -> {
                     log.warn("Order not found: id={}", orderId);
