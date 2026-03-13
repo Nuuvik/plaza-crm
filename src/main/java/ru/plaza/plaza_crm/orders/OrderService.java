@@ -196,6 +196,9 @@ public class OrderService {
                 });
 
         order.setNotes(request.getNotes());
+
+        orderRepository.save(order);
+
         auditService.log("ORDER", id, "UPDATE_NOTES");
 
         return OrderMapper.toResponse(order);
@@ -228,7 +231,7 @@ public class OrderService {
 
     @Transactional
     public OrderResponse updateItem(Long orderId, Long productId, int quantity) {
-        log.info("Updating item to orderId={} productId={} quantity={}", orderId, productId, quantity);
+        log.info("Updating item for orderId={} productId={} quantity={}", orderId, productId, quantity);
         Order order = orderRepository.findByIdAndDeletedFalse(orderId)
                 .orElseThrow(() -> {
                     log.warn("Order not found: id={}", orderId);
