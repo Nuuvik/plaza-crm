@@ -126,6 +126,8 @@ public class OrderService {
 
         order.confirm();
 
+        orderRepository.save(order);
+
         auditService.log("ORDER", id, "CONFIRM");
 
         log.info("Order confirmed: id={}", id);
@@ -142,6 +144,9 @@ public class OrderService {
                     return new ResourceNotFoundException("Order not found");
                 });
         order.cancel();
+
+        orderRepository.save(order);
+
         auditService.log("ORDER", id, "CANCEL");
         return OrderMapper.toResponse(order);
     }
@@ -156,6 +161,9 @@ public class OrderService {
                 });
 
         order.markAsPaid();
+
+        orderRepository.save(order);
+
         auditService.log("ORDER", id, "PAY");
         return OrderMapper.toResponse(order);
     }
@@ -170,6 +178,9 @@ public class OrderService {
                 });
 
         order.ship();
+
+        orderRepository.save(order);
+
         auditService.log("ORDER", id, "SHIP");
         return OrderMapper.toResponse(order);
     }
@@ -235,7 +246,7 @@ public class OrderService {
 
     @Transactional
     public OrderResponse removeItem(Long orderId, Long productId) {
-        log.info("Removing item to orderId={} productId={} ", orderId, productId);
+        log.info("Removing item from orderId={} productId={} ", orderId, productId);
         Order order = orderRepository.findByIdAndDeletedFalse(orderId)
                 .orElseThrow(() -> {
                     log.warn("Order not found: id={}", orderId);

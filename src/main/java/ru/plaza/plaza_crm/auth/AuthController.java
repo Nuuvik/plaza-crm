@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -28,10 +29,10 @@ public class AuthController {
 
 
     @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public String register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<Map<String, String>> register(@Valid @RequestBody RegisterRequest request) {
         authService.register(request);
-        return "User created";
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("message", "User created"));
     }
 
     @PostMapping("/login")
