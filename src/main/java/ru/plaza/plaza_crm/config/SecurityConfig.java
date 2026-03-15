@@ -1,4 +1,4 @@
-package ru.plaza.plaza_crm.auth;
+package ru.plaza.plaza_crm.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +10,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import ru.plaza.plaza_crm.auth.JwtAuthenticationFilter;
 
 @Configuration
 @EnableMethodSecurity
@@ -32,6 +33,12 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/webjars/**"
+                        ).permitAll()
                         .requestMatchers("/users/me").authenticated()
                         .requestMatchers("/users/**").hasRole("ADMIN")
                         .requestMatchers("/auth/register").hasRole("ADMIN")
