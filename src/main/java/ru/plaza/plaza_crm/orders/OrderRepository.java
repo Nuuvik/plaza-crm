@@ -13,18 +13,47 @@ import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    Optional<Order> findByIdAndDeletedFalse(Long id);
-
-    Page<Order> findByCustomerIdAndDeletedFalse(Long customerId, Pageable pageable);
-
     @Query("""
-            SELECT o FROM Order o
-            WHERE o.deleted = false
-            AND (:status IS NULL OR o.status = :status)
-            AND (:customerId IS NULL OR o.customer.id = :customerId)
-            AND (:from IS NULL OR o.createdAt >= :from)
-            AND (:to IS NULL OR o.createdAt <= :to)
-            """)
+        SELECT o FROM Order o
+        JOIN FETCH o.customer
+        LEFT JOIN FETCH o.items i
+        LEFT JOIN FETCH i.product
+        WHERE o.id = :id AND o.deleted = false
+        """)
+    Optional<Order> findByIdAndDeletedFalse(@Param("id") Long id);
+
+    @Query(value = """
+        SELECT DISTINCT o FROM Order o
+        JOIN FETCH o.customer
+        LEFT JOIN FETCH o.items i
+        LEFT JOIN FETCH i.product
+        WHERE o.customer.id = :customerId AND o.deleted = false
+        """,
+            countQuery = """
+        SELECT COUNT(DISTINCT o) FROM Order o
+        WHERE o.customer.id = :customerId AND o.deleted = false
+        """)
+    Page<Order> findByCustomerIdAndDeletedFalse(@Param("customerId") Long customerId, Pageable pageable);
+
+    @Query(value = """
+        SELECT DISTINCT o FROM Order o
+        JOIN FETCH o.customer
+        LEFT JOIN FETCH o.items i
+        LEFT JOIN FETCH i.product
+        WHERE o.deleted = false
+        AND (:status IS NULL OR o.status = :status)
+        AND (:customerId IS NULL OR o.customer.id = :customerId)
+        AND (:from IS NULL OR o.createdAt >= :from)
+        AND (:to IS NULL OR o.createdAt <= :to)
+        """,
+            countQuery = """
+        SELECT COUNT(DISTINCT o) FROM Order o
+        WHERE o.deleted = false
+        AND (:status IS NULL OR o.status = :status)
+        AND (:customerId IS NULL OR o.customer.id = :customerId)
+        AND (:from IS NULL OR o.createdAt >= :from)
+        AND (:to IS NULL OR o.createdAt <= :to)
+        """)
     Page<Order> search(@Param("status") OrderStatus status,
                        @Param("customerId") Long customerId,
                        @Param("from") LocalDateTime from,
