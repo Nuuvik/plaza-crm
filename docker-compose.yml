@@ -20,10 +20,19 @@ services:
     ports:
       - "8080:2209"
     environment:
+      SERVER_PORT: 2209
+      SPRING_APPLICATION_NAME: plaza-crm
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/plaza_crm
       SPRING_DATASOURCE_USERNAME: plaza
       SPRING_DATASOURCE_PASSWORD: plaza123
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_SHOW_SQL: false
+      SPRING_JPA_OPEN_IN_VIEW: false
+      SPRING_FLYWAY_ENABLED: true
+      SPRING_FLYWAY_LOCATIONS: classpath:db/migration
+      SPRING_DATA_WEB_PAGEABLE_DEFAULT_PAGE_SIZE: 10
+      SPRING_DATA_WEB_PAGEABLE_MAX_PAGE_SIZE: 50
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
     depends_on:
