@@ -12,6 +12,7 @@ public class OrderMapper {
         return new OrderResponse(
                 order.getId(),
                 order.getCustomer().getId(),
+                order.getCustomer().getName(),
                 order.getStatus(),
                 order.getTotalAmount(),
                 order.getCreatedAt(),
