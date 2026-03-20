@@ -1,0 +1,57 @@
+export interface LoginRequest {
+    username: string
+    password: string
+}
+
+export interface User {
+    id: number
+    username: string
+    role: 'ADMIN' | 'MANAGER'
+    createdAt: string
+}
+
+export interface Customer {
+    id: number
+    name: string
+    email: string
+    phone: string
+    telegram: string
+    address: string
+}
+
+export interface Product {
+    id: number
+    sku: string
+    name: string
+    price: number
+    car: string
+    stockQuantity: number
+}
+
+export interface OrderItem {
+    productId: number
+    sku: string
+    productName: string
+    quantity: number
+    unitPrice: number
+    totalPrice: number
+}
+
+export interface Order {
+    id: number
+    customerId: number
+    customerName: string
+    status: 'NEW' | 'CONFIRMED' | 'PAID' | 'SHIPPED' | 'CANCELLED'
+    totalPrice: number
+    createdAt: string
+    notes: string
+    items: OrderItem[]
+}
+
+export interface Page<T> {
+    content: T[]
+    totalElements: number
+    totalPages: number
+    size: number
+    number: number
+}

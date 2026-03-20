@@ -1,0 +1,30 @@
+server.port=8080
+spring.application.name=plaza-crm
+
+# Database
+spring.datasource.url=jdbc:postgresql://localhost:5432/plaza_crm
+spring.datasource.username=postgres
+spring.datasource.password=your_password_here
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.show-sql=false
+spring.jpa.open-in-view=false
+
+# Flyway
+spring.flyway.enabled=true
+spring.flyway.locations=classpath:db/migration
+
+# Pageable
+spring.data.web.pageable.default-page-size=10
+spring.data.web.pageable.max-page-size=50
+
+# JWT
+# Для прода использовать переменные окружения:
+# jwt.secret=${JWT_SECRET}
+# jwt.expiration=${JWT_EXPIRATION}
+jwt.secret=your_base64_encoded_secret_here
+jwt.expiration=86400000
+
+# Swagger
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.api-docs.path=/v3/api-docs
