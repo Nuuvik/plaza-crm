@@ -1,0 +1,30 @@
+2026-03-12 21:03:17 INFO  r.p.plaza_crm.PlazaCrmApplication - Starting PlazaCrmApplication using Java 25.0.1 with PID 4924 (D:\projects\plaza-crm\target\classes started by Nuuvik in D:\projects\plaza-crm)
+2026-03-12 21:03:17 INFO  r.p.plaza_crm.PlazaCrmApplication - No active profile set, falling back to 1 default profile: "default"
+2026-03-12 21:03:51 INFO  r.p.plaza_crm.PlazaCrmApplication - Starting PlazaCrmApplication using Java 25.0.1 with PID 19296 (D:\projects\plaza-crm\target\classes started by Nuuvik in D:\projects\plaza-crm)
+2026-03-12 21:03:51 INFO  r.p.plaza_crm.PlazaCrmApplication - No active profile set, falling back to 1 default profile: "default"
+2026-03-12 21:03:54 INFO  r.p.plaza_crm.PlazaCrmApplication - Started PlazaCrmApplication in 3.388 seconds (process running for 3.704)
+2026-03-12 21:04:02 INFO  r.p.plaza_crm.PlazaCrmApplication - Starting PlazaCrmApplication using Java 25.0.1 with PID 25668 (D:\projects\plaza-crm\target\classes started by Nuuvik in D:\projects\plaza-crm)
+2026-03-12 21:04:02 INFO  r.p.plaza_crm.PlazaCrmApplication - No active profile set, falling back to 1 default profile: "default"
+2026-03-12 21:04:04 INFO  r.p.plaza_crm.PlazaCrmApplication - Started PlazaCrmApplication in 3.207 seconds (process running for 3.536)
+2026-03-12 21:04:09 INFO  ru.plaza.plaza_crm.auth.AuthService - Logging user, username=admin
+2026-03-12 21:05:00 INFO  r.p.plaza_crm.orders.OrderService - Creating order for customerId=5
+2026-03-12 21:05:00 WARN  r.p.plaza_crm.orders.OrderService - Customer not found: id=5
+2026-03-12 21:05:11 INFO  r.p.p.customers.CustomerService - Creating customer test customer 34
+2026-03-12 21:05:11 INFO  r.p.p.customers.CustomerService - Customer created id=1
+2026-03-12 21:05:17 INFO  r.p.plaza_crm.orders.OrderService - Creating order for customerId=5
+2026-03-12 21:05:17 WARN  r.p.plaza_crm.orders.OrderService - Customer not found: id=5
+2026-03-12 21:06:21 INFO  r.p.p.products.ProductService - Creating product 2325
+2026-03-12 21:06:21 INFO  r.p.p.products.ProductService - Product created id=6
+2026-03-12 21:06:23 INFO  r.p.p.products.ProductService - Creating product 2325
+2026-03-12 21:06:23 WARN  r.p.p.products.ProductService - SKU already in use: sku=zhopa
+2026-03-12 21:06:28 INFO  r.p.p.products.ProductService - Creating product 2325
+2026-03-12 21:06:28 INFO  r.p.p.products.ProductService - Product created id=7
+2026-03-12 21:06:39 INFO  r.p.plaza_crm.orders.OrderService - Creating order for customerId=1
+2026-03-12 21:06:39 INFO  r.p.plaza_crm.orders.OrderService - Adding productId=6 quantity=345999999
+2026-03-12 21:06:45 INFO  r.p.plaza_crm.orders.OrderService - Creating order for customerId=1
+2026-03-12 21:06:45 INFO  r.p.plaza_crm.orders.OrderService - Adding productId=6 quantity=1
+2026-03-12 21:06:45 INFO  r.p.plaza_crm.orders.OrderService - Adding productId=7 quantity=2
+2026-03-12 21:06:45 INFO  r.p.plaza_crm.orders.OrderService - Order created: id=1 total=3702.00
+2026-03-12 21:56:24 INFO  r.p.plaza_crm.PlazaCrmApplication - Starting PlazaCrmApplication using Java 25.0.1 with PID 28076 (D:\projects\plaza-crm\target\classes started by Nuuvik in D:\projects\plaza-crm)
+2026-03-12 21:56:24 INFO  r.p.plaza_crm.PlazaCrmApplication - No active profile set, falling back to 1 default profile: "default"
+2026-03-12 21:56:27 INFO  r.p.plaza_crm.PlazaCrmApplication - Started PlazaCrmApplication in 3.12 seconds (process running for 3.426)

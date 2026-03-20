@@ -1,0 +1,7 @@
+2026-03-10 20:18:23 INFO  r.p.plaza_crm.PlazaCrmApplication - Starting PlazaCrmApplication using Java 25.0.1 with PID 7596 (D:\projects\plaza-crm\target\classes started by Nuuvik in D:\projects\plaza-crm)
+2026-03-10 20:18:23 INFO  r.p.plaza_crm.PlazaCrmApplication - No active profile set, falling back to 1 default profile: "default"
+2026-03-10 20:18:27 INFO  r.p.plaza_crm.PlazaCrmApplication - Started PlazaCrmApplication in 4.782 seconds (process running for 5.386)
+2026-03-10 20:19:03 INFO  r.p.plaza_crm.PlazaCrmApplication - Starting PlazaCrmApplication using Java 25.0.1 with PID 25384 (D:\projects\plaza-crm\target\classes started by Nuuvik in D:\projects\plaza-crm)
+2026-03-10 20:19:03 INFO  r.p.plaza_crm.PlazaCrmApplication - No active profile set, falling back to 1 default profile: "default"
+2026-03-10 20:19:06 INFO  r.p.plaza_crm.PlazaCrmApplication - Started PlazaCrmApplication in 3.219 seconds (process running for 3.588)
+2026-03-10 20:19:06 INFO  r.p.plaza_crm.auth.DataInitializer - Default admin created: username=admin, password=admin123 — CHANGE IMMEDIATELY

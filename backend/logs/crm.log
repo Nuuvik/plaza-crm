@@ -1,0 +1,22 @@
+2026-03-20 12:59:19 INFO  r.p.plaza_crm.PlazaCrmApplication - Starting PlazaCrmApplication using Java 25.0.1 with PID 25240 (D:\projects\plaza-crm\target\classes started by Nuuvik in D:\projects\plaza-crm)
+2026-03-20 12:59:19 INFO  r.p.plaza_crm.PlazaCrmApplication - No active profile set, falling back to 1 default profile: "default"
+2026-03-20 12:59:28 INFO  r.p.plaza_crm.PlazaCrmApplication - Started PlazaCrmApplication in 9.515 seconds (process running for 14.496)
+2026-03-20 12:59:52 WARN  r.p.p.auth.JwtAuthenticationFilter - Invalid JWT token: JWT expired 72240545 milliseconds ago at 2026-03-19T13:55:52.000Z. Current time: 2026-03-20T09:59:52.545Z. Allowed clock skew: 0 milliseconds.
+2026-03-20 12:59:52 WARN  r.p.p.auth.JwtAuthenticationFilter - Invalid JWT token: JWT expired 72240551 milliseconds ago at 2026-03-19T13:55:52.000Z. Current time: 2026-03-20T09:59:52.551Z. Allowed clock skew: 0 milliseconds.
+2026-03-20 13:00:00 INFO  ru.plaza.plaza_crm.auth.AuthService - Logging user, username=admin
+2026-03-20 13:04:12 INFO  r.p.plaza_crm.orders.OrderService - Getting order id=2
+2026-03-20 13:04:12 INFO  r.p.plaza_crm.orders.OrderService - Getting order id=2
+2026-03-20 13:04:15 INFO  r.p.plaza_crm.orders.OrderService - Getting order id=3
+2026-03-20 13:04:15 INFO  r.p.plaza_crm.orders.OrderService - Getting order id=3
+2026-03-20 13:04:19 INFO  r.p.plaza_crm.orders.OrderService - Getting order id=2
+2026-03-20 13:04:19 INFO  r.p.plaza_crm.orders.OrderService - Getting order id=2
+2026-03-20 15:56:56 INFO  r.p.plaza_crm.PlazaCrmApplication - Starting PlazaCrmApplication using Java 25.0.1 with PID 18768 (D:\projects\plaza-crm\target\classes started by Nuuvik in D:\projects\plaza-crm)
+2026-03-20 15:56:56 INFO  r.p.plaza_crm.PlazaCrmApplication - No active profile set, falling back to 1 default profile: "default"
+2026-03-20 15:57:00 INFO  r.p.plaza_crm.PlazaCrmApplication - Started PlazaCrmApplication in 3.973 seconds (process running for 6.858)
+2026-03-20 15:57:42 INFO  r.p.plaza_crm.orders.OrderService - Getting orders for customerId=2
+2026-03-20 15:57:42 INFO  r.p.plaza_crm.orders.OrderService - Getting orders for customerId=2
+2026-03-20 15:58:13 INFO  r.p.plaza_crm.orders.OrderService - Getting orders for customerId=2
+2026-03-20 15:58:13 INFO  r.p.plaza_crm.orders.OrderService - Getting orders for customerId=2
+2026-03-20 18:15:20 INFO  r.p.p.PlazaCrmApplicationTests - Starting PlazaCrmApplicationTests using Java 25.0.1 with PID 4408 (started by Nuuvik in D:\projects\plaza-crm\backend)
+2026-03-20 18:15:20 INFO  r.p.p.PlazaCrmApplicationTests - No active profile set, falling back to 1 default profile: "default"
+2026-03-20 18:15:23 INFO  r.p.p.PlazaCrmApplicationTests - Started PlazaCrmApplicationTests in 3.608 seconds (process running for 4.43)
