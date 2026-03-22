@@ -46,11 +46,16 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
     }
 
     const handleSaveNotes = async () => {
+        setActionLoading(true)
         try {
             await updateNotes(orderId, notes)
             messageApi.success('Примечание сохранено')
-        } catch {
-            messageApi.error('Ошибка')
+        } catch (e: unknown) {
+            if (axios.isAxiosError(e) && e.response?.status === 400) {
+                messageApi.error(e.response?.data?.message || 'Ошибка')
+            }
+        } finally {
+            setActionLoading(false)
         }
     }
 

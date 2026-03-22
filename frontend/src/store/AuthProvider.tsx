@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react'
-import { AuthContext } from './AuthContext.ts'
-import { getToken, removeToken } from './auth'
+import { AuthContext } from './AuthContext'
+import { getToken, setToken, removeToken } from './auth'
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [isAuth, setIsAuth] = useState(!!getToken())
+
+    const login = (token: string) => {
+        setToken(token)
+        setIsAuth(true)
+    }
 
     const logout = () => {
         removeToken()
@@ -17,7 +22,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, [])
 
     return (
-        <AuthContext.Provider value={{ isAuth, logout }}>
+        <AuthContext.Provider value={{ isAuth, login, logout }}>
             {children}
         </AuthContext.Provider>
     )

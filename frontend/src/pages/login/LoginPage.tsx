@@ -1,17 +1,18 @@
 import { Form, Input, Button, Card, message } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import api from '../../api'
-import { setToken } from '../../store/auth'
+import { useAuth } from '../../store/useAuth'
 import type { LoginRequest } from '../../types'
 
 const LoginPage = () => {
     const navigate = useNavigate()
+    const { login } = useAuth()
     const [messageApi, contextHolder] = message.useMessage()
 
     const onFinish = async (values: LoginRequest) => {
         try {
             const response = await api.post('/auth/login', values)
-            setToken(response.data.token)
+            login(response.data.token)
             navigate('/')
         } catch {
             messageApi.error('Неверный логин или пароль')
