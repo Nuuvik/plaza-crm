@@ -1,0 +1,58 @@
+# ===== JAVA / MAVEN =====
+target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/wrapper/maven-wrapper.jar
+
+# ===== SPRING =====
+backend/src/main/resources/application.properties
+backend/src/main/resources/application-*.properties
+backend/.env
+
+# ===== LOGS =====
+logs/
+*.log
+backend/logs/
+
+# ===== NODE / FRONTEND =====
+node_modules/
+dist/
+dist-ssr/
+*.local
+frontend/.env
+
+# ===== IDE =====
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== MISC =====
+HELP.md
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
