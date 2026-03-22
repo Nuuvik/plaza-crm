@@ -1,6 +1,0 @@
-2026-03-11 19:59:49 INFO  r.p.plaza_crm.PlazaCrmApplication - Starting PlazaCrmApplication using Java 25.0.1 with PID 19168 (D:\projects\plaza-crm\target\classes started by Nuuvik in D:\projects\plaza-crm)
-2026-03-11 19:59:49 INFO  r.p.plaza_crm.PlazaCrmApplication - No active profile set, falling back to 1 default profile: "default"
-2026-03-11 19:59:53 INFO  r.p.plaza_crm.PlazaCrmApplication - Started PlazaCrmApplication in 4.337 seconds (process running for 4.872)
-2026-03-11 21:15:38 INFO  r.p.plaza_crm.PlazaCrmApplication - Starting PlazaCrmApplication using Java 25.0.1 with PID 13140 (D:\projects\plaza-crm\target\classes started by Nuuvik in D:\projects\plaza-crm)
-2026-03-11 21:15:38 INFO  r.p.plaza_crm.PlazaCrmApplication - No active profile set, falling back to 1 default profile: "default"
-2026-03-11 21:15:43 INFO  r.p.plaza_crm.PlazaCrmApplication - Started PlazaCrmApplication in 5.355 seconds (process running for 6.469)
