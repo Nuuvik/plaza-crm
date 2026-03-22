@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import {useState, useEffect, useCallback} from 'react'
 import { Table, Button, Input, Space, Popconfirm, message, Tag } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -17,7 +17,7 @@ const ProductsPage = () => {
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
     const [messageApi, contextHolder] = message.useMessage()
 
-    const load = async (p = page, s = search) => {
+    const load = useCallback(async (p = page, s = search) => {
         setLoading(true)
         try {
             const res = await getProducts({ name: s || undefined, page: p, size: 10 })
@@ -26,7 +26,11 @@ const ProductsPage = () => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [page, search])
+
+    useEffect(() => {
+        load()
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => { load() }, [])
 

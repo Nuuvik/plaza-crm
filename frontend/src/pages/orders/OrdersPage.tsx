@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import {useState, useEffect, useCallback} from 'react'
 import { Table, Button, Space, Popconfirm, message, Tag, Select } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -27,7 +27,7 @@ const OrdersPage = () => {
     const [detailOrderId, setDetailOrderId] = useState<number | null>(null)
     const [messageApi, contextHolder] = message.useMessage()
 
-    const load = async (p = page, status = statusFilter) => {
+    const load = useCallback(async (p = page, status = statusFilter) => {
         setLoading(true)
         try {
             const res = await getOrders({ status, page: p, size: 10 })
@@ -36,9 +36,11 @@ const OrdersPage = () => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [page, statusFilter])
 
-    useEffect(() => { load(0, undefined) }, [])
+    useEffect(() => {
+        load(0, undefined)
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleDelete = async (id: number) => {
         await deleteOrder(id)

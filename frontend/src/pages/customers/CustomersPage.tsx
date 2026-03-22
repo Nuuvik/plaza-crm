@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import {useState, useEffect, useCallback} from 'react'
 import { Table, Button, Input, Space, Popconfirm, message, Tag } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -19,7 +19,7 @@ const CustomersPage = () => {
     const [messageApi, contextHolder] = message.useMessage()
     const [ordersCustomer, setOrdersCustomer] = useState<Customer | null>(null)
 
-    const load = async (p = page, s = search) => {
+    const load = useCallback(async (p = page, s = search) => {
         setLoading(true)
         try {
             const res = await getCustomers({ name: s || undefined, page: p, size: 10 })
@@ -28,9 +28,11 @@ const CustomersPage = () => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [page, search])
 
-    useEffect(() => { load() }, [])
+    useEffect(() => {
+        load()
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleDelete = async (id: number) => {
         await deleteCustomer(id)

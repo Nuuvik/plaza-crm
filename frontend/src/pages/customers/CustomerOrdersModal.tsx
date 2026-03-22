@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import {useState, useEffect, useCallback} from 'react'
 import { Modal, Table, Tag } from 'antd'
 import type { Order } from '../../types'
 import { getOrdersByCustomer } from '../../api/orders'
@@ -26,7 +26,7 @@ const CustomerOrdersModal = ({ customerId, customerName, onClose }: Props) => {
     const [page, setPage] = useState(0)
     const [loading, setLoading] = useState(false)
 
-    const load = async (p = page) => {
+    const load = useCallback(async (p = page) => {
         setLoading(true)
         try {
             const res = await getOrdersByCustomer(customerId, { page: p, size: 10 })
@@ -35,9 +35,11 @@ const CustomerOrdersModal = ({ customerId, customerName, onClose }: Props) => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [customerId, page])
 
-    useEffect(() => { load() }, [])
+    useEffect(() => {
+        load()
+    }, [load])
 
     const columns: ColumnsType<Order> = [
         { title: '№', dataIndex: 'id', key: 'id', width: 60 },
