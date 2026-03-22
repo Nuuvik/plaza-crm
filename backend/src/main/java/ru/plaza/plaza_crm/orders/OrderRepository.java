@@ -23,23 +23,20 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findByIdAndDeletedFalse(@Param("id") Long id);
 
     @Query(value = """
-        SELECT DISTINCT o FROM Order o
-        JOIN FETCH o.customer
-        LEFT JOIN FETCH o.items i
-        LEFT JOIN FETCH i.product
-        WHERE o.customer.id = :customerId AND o.deleted = false
-        """,
+    SELECT o FROM Order o
+    JOIN FETCH o.customer
+    WHERE o.customer.id = :customerId AND o.deleted = false
+    """,
             countQuery = """
-        SELECT COUNT(DISTINCT o) FROM Order o
-        WHERE o.customer.id = :customerId AND o.deleted = false
-        """)
-    Page<Order> findByCustomerIdAndDeletedFalse(@Param("customerId") Long customerId, Pageable pageable);
+    SELECT COUNT(o) FROM Order o
+    WHERE o.customer.id = :customerId AND o.deleted = false
+    """)
+    Page<Order> findByCustomerIdAndDeletedFalse(@Param("customerId") Long customerId,
+                                                Pageable pageable);
 
     @Query(value = """
-    SELECT DISTINCT o FROM Order o
+    SELECT o FROM Order o
     JOIN FETCH o.customer
-    LEFT JOIN FETCH o.items i
-    LEFT JOIN FETCH i.product
     WHERE o.deleted = false
     AND (:status IS NULL OR o.status = :status)
     AND (:customerId IS NULL OR o.customer.id = :customerId)
@@ -47,7 +44,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     AND (CAST(:to AS timestamp) IS NULL OR o.createdAt <= :to)
     """,
             countQuery = """
-    SELECT COUNT(DISTINCT o) FROM Order o
+    SELECT COUNT(o) FROM Order o
     WHERE o.deleted = false
     AND (:status IS NULL OR o.status = :status)
     AND (:customerId IS NULL OR o.customer.id = :customerId)

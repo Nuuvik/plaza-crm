@@ -54,7 +54,7 @@ const ProductModal = ({ open, product, onClose, onSuccess }: Props) => {
         >
             {contextHolder}
             <Form form={form} layout="vertical" onFinish={onFinish}>
-                <Form.Item label="SKU" name="sku" rules={[{ required: true, message: 'Введите SKU' }]}>
+                <Form.Item label="Артикул" name="sku" rules={[{ required: true, message: 'Введите артикул' }]}>
                     <Input />
                 </Form.Item>
                 <Form.Item label="Название" name="name" rules={[{ required: true, message: 'Введите название' }]}>

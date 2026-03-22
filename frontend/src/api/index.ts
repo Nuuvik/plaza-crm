@@ -7,7 +7,20 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token')
-    if (token) config.headers.Authorization = `Bearer ${token}`
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]))
+            if (payload.exp && payload.exp * 1000 < Date.now()) {
+                localStorage.removeItem('token')
+                logoutFn?.()
+                window.location.href = '/login'
+                return Promise.reject(new Error('Token expired'))
+            }
+        } catch {
+            // Невалидный формат токена — сервер вернёт 401, обработаем там
+        }
+        config.headers.Authorization = `Bearer ${token}`
+    }
     return config
 })
 
@@ -16,6 +29,7 @@ let isRedirectingToLogin = false
 
 export const setLogoutFn = (fn: () => void) => {
     logoutFn = fn
+    isRedirectingToLogin = false  // ← сброс при монтировании новой сессии
 }
 
 api.interceptors.response.use(

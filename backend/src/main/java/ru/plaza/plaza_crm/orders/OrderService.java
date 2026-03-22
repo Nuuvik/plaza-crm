@@ -80,24 +80,22 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public Page<OrderResponse> getOrders(OrderStatus status, Long customerId, LocalDateTime from, LocalDateTime to,
-                                         Pageable pageable) {
+    public Page<OrderListResponse> getOrders(OrderStatus status, Long customerId,
+                                             LocalDateTime from, LocalDateTime to,
+                                             Pageable pageable) {
         return orderRepository.search(status, customerId, from, to, pageable)
-                .map(OrderMapper::toResponse);
+                .map(OrderMapper::toListResponse);
     }
 
-    @Transactional(readOnly = true)
-    public Page<OrderResponse> getOrdersByCustomer(Long customerId, Pageable pageable) {
-        log.info("Getting orders for customerId={}", customerId);
 
+    @Transactional(readOnly = true)
+    public Page<OrderListResponse> getOrdersByCustomer(Long customerId, Pageable pageable) {
         if (!customerRepository.existsByIdAndDeletedFalse(customerId)) {
-            log.warn("Customer not found: id={}", customerId);
             throw new ResourceNotFoundException("Customer not found");
         }
-
         return orderRepository
                 .findByCustomerIdAndDeletedFalse(customerId, pageable)
-                .map(OrderMapper::toResponse);
+                .map(OrderMapper::toListResponse);
     }
 
     @Transactional

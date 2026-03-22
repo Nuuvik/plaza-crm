@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import ru.plaza.plaza_crm.orders.OrderListResponse;
 import ru.plaza.plaza_crm.orders.OrderResponse;
 import ru.plaza.plaza_crm.orders.OrderService;
 
@@ -59,7 +60,7 @@ public class CustomerController {
     }
 
     @GetMapping("/{id}/orders")
-    public Page<OrderResponse> getCustomerOrders(@PathVariable Long id, Pageable pageable) {
+    public Page<OrderListResponse> getCustomerOrders(@PathVariable Long id, Pageable pageable) {
         return orderService.getOrdersByCustomer(id, pageable);
     }
 }

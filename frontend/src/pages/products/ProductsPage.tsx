@@ -78,7 +78,7 @@ const ProductsPage = () => {
     }, 300)
 
     const columns: ColumnsType<Product> = [
-        { title: 'SKU', dataIndex: 'sku', key: 'sku',
+        { title: 'Артикул', dataIndex: 'sku', key: 'sku',
             render: (v) => <Tag color="purple">{v}</Tag> },
         { title: 'Название', dataIndex: 'name', key: 'name' },
         { title: 'Цена', dataIndex: 'price', key: 'price',

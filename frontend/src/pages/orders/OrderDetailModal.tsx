@@ -1,4 +1,4 @@
-import {useState, useEffect, useCallback} from 'react'
+import {useState, useEffect, useCallback, useRef} from 'react'
 import { Modal, Descriptions, Tag, Table, Button, Space, Input, message, Popconfirm } from 'antd'
 import { getOrderById, confirmOrder, cancelOrder, payOrder, shipOrder, updateNotes } from '../../api/orders'
 import type { Order } from '../../types'
@@ -16,13 +16,19 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
     const [loading, setLoading] = useState(false)
     const [messageApi, contextHolder] = message.useMessage()
     const [actionLoading, setActionLoading] = useState(false)
+    const notesInitialized = useRef(false)
 
     const load = useCallback(async () => {
         setLoading(true)
         try {
             const res = await getOrderById(orderId)
             setOrder(res.data)
-            setNotes(res.data.notes || '')
+            // Записываем notes только при первой загрузке,
+            // чтобы не затирать несохранённый текст пользователя
+            if (!notesInitialized.current) {
+                setNotes(res.data.notes || '')
+                notesInitialized.current = true
+            }
         } finally {
             setLoading(false)
         }
@@ -60,7 +66,7 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
     }
 
     const itemColumns = [
-        { title: 'SKU', dataIndex: 'sku', key: 'sku' },
+        { title: 'Артикул', dataIndex: 'sku', key: 'sku' },
         { title: 'Товар', dataIndex: 'productName', key: 'productName' },
         { title: 'Кол-во', dataIndex: 'quantity', key: 'quantity' },
         { title: 'Цена', dataIndex: 'unitPrice', key: 'unitPrice', render: (v: number) => `${v} ₽` },

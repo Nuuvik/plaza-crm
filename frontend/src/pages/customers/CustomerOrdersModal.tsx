@@ -17,10 +17,10 @@ const CustomerOrdersModal = ({ customerId, customerName, onClose }: Props) => {
     const [page, setPage] = useState(0)
     const [loading, setLoading] = useState(false)
 
-    const load = useCallback(async (p = page) => {
+    const load = useCallback(async () => {
         setLoading(true)
         try {
-            const res = await getOrdersByCustomer(customerId, { page: p, size: 10 })
+            const res = await getOrdersByCustomer(customerId, { page, size: 10 })
             setOrders(res.data.content)
             setTotal(res.data.totalElements)
         } finally {
@@ -67,7 +67,7 @@ const CustomerOrdersModal = ({ customerId, customerName, onClose }: Props) => {
                     total,
                     current: page + 1,
                     pageSize: 10,
-                    onChange: (p) => { setPage(p - 1); load(p - 1) }
+                    onChange: (p) => setPage(p - 1)
                 }}
             />
         </Modal>

@@ -20,5 +20,17 @@ public class OrderMapper {
                 items
         );
     }
+
+    public static OrderListResponse toListResponse(Order order) {
+        return new OrderListResponse(
+                order.getId(),
+                order.getCustomer().getId(),
+                order.getCustomer().getName(),
+                order.getStatus(),
+                order.getTotalAmount(),
+                order.getCreatedAt(),
+                order.getNotes()
+        );
+    }
 }
 

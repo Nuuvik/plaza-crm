@@ -42,7 +42,7 @@ public class OrderController {
     }
 
     @GetMapping
-    public Page<OrderResponse> getOrders(
+    public Page<OrderListResponse> getOrders(
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
