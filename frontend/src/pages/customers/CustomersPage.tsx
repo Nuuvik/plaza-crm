@@ -1,28 +1,32 @@
-import {useState, useEffect, useCallback} from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Table, Button, Input, Space, Popconfirm, message, Tag } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { useSearchParams } from 'react-router-dom'
 import type { ColumnsType } from 'antd/es/table'
 import type { Customer } from '../../types'
 import { getCustomers, deleteCustomer } from '../../api/customers'
 import CustomerModal from './CustomerModal'
 import CustomerOrdersModal from './CustomerOrdersModal'
 import { useDebouncedCallback } from 'use-debounce'
+import axios from 'axios'
 
 const CustomersPage = () => {
+    const [searchParams, setSearchParams] = useSearchParams()
+    const page = parseInt(searchParams.get('page') ?? '1') - 1
+    const search = searchParams.get('name') ?? ''
+
     const [customers, setCustomers] = useState<Customer[]>([])
     const [total, setTotal] = useState(0)
-    const [page, setPage] = useState(0)
     const [loading, setLoading] = useState(false)
-    const [search, setSearch] = useState('')
     const [modalOpen, setModalOpen] = useState(false)
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
     const [messageApi, contextHolder] = message.useMessage()
     const [ordersCustomer, setOrdersCustomer] = useState<Customer | null>(null)
 
-    const load = useCallback(async (p = page, s = search) => {
+    const load = useCallback(async () => {
         setLoading(true)
         try {
-            const res = await getCustomers({ name: s || undefined, page: p, size: 10 })
+            const res = await getCustomers({ name: search || undefined, page, size: 10 })
             setCustomers(res.data.content)
             setTotal(res.data.totalElements)
         } finally {
@@ -32,12 +36,18 @@ const CustomersPage = () => {
 
     useEffect(() => {
         load()
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [load])
 
     const handleDelete = async (id: number) => {
-        await deleteCustomer(id)
-        messageApi.success('Клиент удалён')
-        load()
+        try {
+            await deleteCustomer(id)
+            messageApi.success('Клиент удалён')
+            load()
+        } catch (e: unknown) {
+            if (axios.isAxiosError(e) && e.response?.status === 400) {
+                messageApi.error(e.response?.data?.message || 'Ошибка')
+            }
+        }
     }
 
     const handleEdit = (customer: Customer) => {
@@ -50,9 +60,23 @@ const CustomersPage = () => {
         setModalOpen(true)
     }
 
+    const handlePageChange = (newPage: number) => {
+        setSearchParams(prev => {
+            prev.set('page', String(newPage))
+            return prev
+        })
+    }
+
     const handleSearch = useDebouncedCallback((val: string) => {
-        setPage(0)
-        load(0, val)
+        setSearchParams(prev => {
+            if (val) {
+                prev.set('name', val)
+            } else {
+                prev.delete('name')
+            }
+            prev.set('page', '1')
+            return prev
+        })
     }, 300)
 
     const columns: ColumnsType<Customer> = [
@@ -91,16 +115,10 @@ const CustomersPage = () => {
                     placeholder="Поиск по имени"
                     prefix={<SearchOutlined />}
                     style={{ width: 300 }}
-                    value={search}
-                    onChange={(e) => {
-                        setSearch(e.target.value)
-                        handleSearch(e.target.value)
-                    }}
+                    defaultValue={search}
+                    onChange={(e) => handleSearch(e.target.value)}
                     allowClear
-                    onClear={() => {
-                        setSearch('')
-                        handleSearch('')
-                    }}
+                    onClear={() => handleSearch('')}
                 />
                 <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
                     Новый клиент
@@ -115,7 +133,7 @@ const CustomersPage = () => {
                     total,
                     current: page + 1,
                     pageSize: 10,
-                    onChange: (p) => { setPage(p - 1); load(p - 1) }
+                    onChange: handlePageChange
                 }}
             />
             <CustomerModal

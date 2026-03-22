@@ -1,11 +1,13 @@
-import {useState, useEffect, useCallback} from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Table, Button, Space, Popconfirm, message, Tag, Select } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
+import { useSearchParams } from 'react-router-dom'
 import type { ColumnsType } from 'antd/es/table'
 import type { Order } from '../../types'
 import { getOrders, deleteOrder } from '../../api/orders'
 import OrderModal from './OrderModal'
 import OrderDetailModal from './OrderDetailModal'
+import axios from 'axios'
 
 const statusColors: Record<string, string> = {
     NEW: 'blue', CONFIRMED: 'orange', PAID: 'green',
@@ -18,19 +20,21 @@ const statusLabels: Record<string, string> = {
 }
 
 const OrdersPage = () => {
+    const [searchParams, setSearchParams] = useSearchParams()
+    const page = parseInt(searchParams.get('page') ?? '1') - 1
+    const statusFilter = searchParams.get('status') ?? undefined
+
     const [orders, setOrders] = useState<Order[]>([])
     const [total, setTotal] = useState(0)
-    const [page, setPage] = useState(0)
     const [loading, setLoading] = useState(false)
-    const [statusFilter, setStatusFilter] = useState<string | undefined>()
     const [createModalOpen, setCreateModalOpen] = useState(false)
     const [detailOrderId, setDetailOrderId] = useState<number | null>(null)
     const [messageApi, contextHolder] = message.useMessage()
 
-    const load = useCallback(async (p = page, status = statusFilter) => {
+    const load = useCallback(async () => {
         setLoading(true)
         try {
-            const res = await getOrders({ status, page: p, size: 10 })
+            const res = await getOrders({ status: statusFilter, page, size: 10 })
             setOrders(res.data.content)
             setTotal(res.data.totalElements)
         } finally {
@@ -39,13 +43,38 @@ const OrdersPage = () => {
     }, [page, statusFilter])
 
     useEffect(() => {
-        load(0, undefined)
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+        load()
+    }, [load])
 
     const handleDelete = async (id: number) => {
-        await deleteOrder(id)
-        messageApi.success('Заказ удалён')
-        load()
+        try {
+            await deleteOrder(id)
+            messageApi.success('Заказ удалён')
+            load()
+        } catch (e: unknown) {
+            if (axios.isAxiosError(e) && e.response?.status === 400) {
+                messageApi.error(e.response?.data?.message || 'Ошибка')
+            }
+        }
+    }
+
+    const handlePageChange = (newPage: number) => {
+        setSearchParams(prev => {
+            prev.set('page', String(newPage))
+            return prev
+        })
+    }
+
+    const handleStatusChange = (value: string | undefined) => {
+        setSearchParams(prev => {
+            if (value) {
+                prev.set('status', value)
+            } else {
+                prev.delete('status')
+            }
+            prev.set('page', '1')
+            return prev
+        })
     }
 
     const columns: ColumnsType<Order> = [
@@ -92,7 +121,8 @@ const OrdersPage = () => {
                     placeholder="Фильтр по статусу"
                     allowClear
                     style={{ width: 200 }}
-                    onChange={(v) => { setStatusFilter(v); setPage(0); load(0, v) }}
+                    value={statusFilter}
+                    onChange={handleStatusChange}
                     options={Object.entries(statusLabels).map(([value, label]) => ({ value, label }))}
                 />
                 <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalOpen(true)}>
@@ -108,7 +138,7 @@ const OrdersPage = () => {
                     total,
                     current: page + 1,
                     pageSize: 10,
-                    onChange: (p) => { setPage(p - 1); load(p - 1) }
+                    onChange: handlePageChange
                 }}
             />
             <OrderModal

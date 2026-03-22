@@ -1,26 +1,30 @@
-import {useState, useEffect, useCallback} from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Table, Button, Input, Space, Popconfirm, message, Tag } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { useSearchParams } from 'react-router-dom'
 import type { ColumnsType } from 'antd/es/table'
 import type { Product } from '../../types'
 import { getProducts, deleteProduct } from '../../api/products'
 import ProductModal from './ProductModal'
 import { useDebouncedCallback } from 'use-debounce'
+import axios from 'axios'
 
 const ProductsPage = () => {
+    const [searchParams, setSearchParams] = useSearchParams()
+    const page = parseInt(searchParams.get('page') ?? '1') - 1
+    const search = searchParams.get('name') ?? ''
+
     const [products, setProducts] = useState<Product[]>([])
     const [total, setTotal] = useState(0)
-    const [page, setPage] = useState(0)
     const [loading, setLoading] = useState(false)
-    const [search, setSearch] = useState('')
     const [modalOpen, setModalOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
     const [messageApi, contextHolder] = message.useMessage()
 
-    const load = useCallback(async (p = page, s = search) => {
+    const load = useCallback(async () => {
         setLoading(true)
         try {
-            const res = await getProducts({ name: s || undefined, page: p, size: 10 })
+            const res = await getProducts({ name: search || undefined, page, size: 10 })
             setProducts(res.data.content)
             setTotal(res.data.totalElements)
         } finally {
@@ -30,14 +34,18 @@ const ProductsPage = () => {
 
     useEffect(() => {
         load()
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-    useEffect(() => { load() }, [])
+    }, [load])
 
     const handleDelete = async (id: number) => {
-        await deleteProduct(id)
-        messageApi.success('Товар удалён')
-        load()
+        try {
+            await deleteProduct(id)
+            messageApi.success('Товар удалён')
+            load()
+        } catch (e: unknown) {
+            if (axios.isAxiosError(e) && e.response?.status === 400) {
+                messageApi.error(e.response?.data?.message || 'Ошибка')
+            }
+        }
     }
 
     const handleEdit = (product: Product) => {
@@ -50,9 +58,23 @@ const ProductsPage = () => {
         setModalOpen(true)
     }
 
+    const handlePageChange = (newPage: number) => {
+        setSearchParams(prev => {
+            prev.set('page', String(newPage))
+            return prev
+        })
+    }
+
     const handleSearch = useDebouncedCallback((val: string) => {
-        setPage(0)
-        load(0, val)
+        setSearchParams(prev => {
+            if (val) {
+                prev.set('name', val)
+            } else {
+                prev.delete('name')
+            }
+            prev.set('page', '1')
+            return prev
+        })
     }, 300)
 
     const columns: ColumnsType<Product> = [
@@ -90,16 +112,10 @@ const ProductsPage = () => {
                     placeholder="Поиск по названию"
                     prefix={<SearchOutlined />}
                     style={{ width: 300 }}
-                    value={search}
-                    onChange={(e) => {
-                        setSearch(e.target.value)
-                        handleSearch(e.target.value)
-                    }}
+                    defaultValue={search}
+                    onChange={(e) => handleSearch(e.target.value)}
                     allowClear
-                    onClear={() => {
-                        setSearch('')
-                        handleSearch('')
-                    }}
+                    onClear={() => handleSearch('')}
                 />
                 <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
                     Новый товар
@@ -114,7 +130,7 @@ const ProductsPage = () => {
                     total,
                     current: page + 1,
                     pageSize: 10,
-                    onChange: (p) => { setPage(p - 1); load(p - 1) }
+                    onChange: handlePageChange
                 }}
             />
             <ProductModal
