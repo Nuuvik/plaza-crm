@@ -3,16 +3,7 @@ import { Modal, Table, Tag } from 'antd'
 import type { Order } from '../../types'
 import { getOrdersByCustomer } from '../../api/orders'
 import type { ColumnsType } from 'antd/es/table'
-
-const statusColors: Record<string, string> = {
-    NEW: 'blue', CONFIRMED: 'orange', PAID: 'green',
-    SHIPPED: 'purple', CANCELLED: 'red'
-}
-
-const statusLabels: Record<string, string> = {
-    NEW: 'Новый', CONFIRMED: 'Подтверждён', PAID: 'Оплачен',
-    SHIPPED: 'Отправлен', CANCELLED: 'Отменён'
-}
+import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from '../../constants/orderStatus'
 
 interface Props {
     customerId: number
@@ -45,7 +36,7 @@ const CustomerOrdersModal = ({ customerId, customerName, onClose }: Props) => {
         { title: '№', dataIndex: 'id', key: 'id', width: 60 },
         {
             title: 'Статус', dataIndex: 'status', key: 'status',
-            render: (v) => <Tag color={statusColors[v]}>{statusLabels[v]}</Tag>
+            render: (v) => <Tag color={ORDER_STATUS_COLORS[v]}>{ORDER_STATUS_LABELS[v]}</Tag>
         },
         {
             title: 'Сумма', dataIndex: 'totalPrice', key: 'totalPrice',

@@ -1,23 +1,15 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Table, Button, Space, Popconfirm, message, Tag, Select } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
-import { useSearchParams } from 'react-router-dom'
-import type { ColumnsType } from 'antd/es/table'
-import type { Order } from '../../types'
-import { getOrders, deleteOrder } from '../../api/orders'
+import {useState, useEffect, useCallback} from 'react'
+import {Table, Button, Space, Popconfirm, message, Tag, Select} from 'antd'
+import {PlusOutlined} from '@ant-design/icons'
+import {useSearchParams} from 'react-router-dom'
+import type {ColumnsType} from 'antd/es/table'
+import type {Order} from '../../types'
+import {getOrders, deleteOrder} from '../../api/orders'
 import OrderModal from './OrderModal'
 import OrderDetailModal from './OrderDetailModal'
 import axios from 'axios'
+import {ORDER_STATUS_COLORS, ORDER_STATUS_LABELS} from '../../constants/orderStatus'
 
-const statusColors: Record<string, string> = {
-    NEW: 'blue', CONFIRMED: 'orange', PAID: 'green',
-    SHIPPED: 'purple', CANCELLED: 'red'
-}
-
-const statusLabels: Record<string, string> = {
-    NEW: 'Новый', CONFIRMED: 'Подтверждён', PAID: 'Оплачен',
-    SHIPPED: 'Отправлен', CANCELLED: 'Отменён'
-}
 
 const OrdersPage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
@@ -34,7 +26,7 @@ const OrdersPage = () => {
     const load = useCallback(async () => {
         setLoading(true)
         try {
-            const res = await getOrders({ status: statusFilter, page, size: 10 })
+            const res = await getOrders({status: statusFilter, page, size: 10})
             setOrders(res.data.content)
             setTotal(res.data.totalElements)
         } finally {
@@ -78,11 +70,11 @@ const OrdersPage = () => {
     }
 
     const columns: ColumnsType<Order> = [
-        { title: '№', dataIndex: 'id', key: 'id', width: 60 },
-        { title: 'Клиент', dataIndex: 'customerName', key: 'customerName' },
+        {title: '№', dataIndex: 'id', key: 'id', width: 60},
+        {title: 'Клиент', dataIndex: 'customerName', key: 'customerName'},
         {
             title: 'Статус', dataIndex: 'status', key: 'status',
-            render: (v) => <Tag color={statusColors[v]}>{statusLabels[v]}</Tag>
+            render: (v) => <Tag color={ORDER_STATUS_COLORS[v]}>{ORDER_STATUS_LABELS[v]}</Tag>
         },
         {
             title: 'Сумма', dataIndex: 'totalPrice', key: 'totalPrice',
@@ -92,8 +84,10 @@ const OrdersPage = () => {
             title: 'Дата', dataIndex: 'createdAt', key: 'createdAt',
             render: (v) => new Date(v).toLocaleDateString('ru-RU')
         },
-        { title: 'Примечание', dataIndex: 'notes', key: 'notes',
-            render: (v) => v || '—' },
+        {
+            title: 'Примечание', dataIndex: 'notes', key: 'notes',
+            render: (v) => v || '—'
+        },
         {
             title: 'Действия', key: 'actions',
             render: (_, record) => (
@@ -116,16 +110,16 @@ const OrdersPage = () => {
     return (
         <div>
             {contextHolder}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 16}}>
                 <Select
                     placeholder="Фильтр по статусу"
                     allowClear
-                    style={{ width: 200 }}
+                    style={{width: 200}}
                     value={statusFilter}
                     onChange={handleStatusChange}
-                    options={Object.entries(statusLabels).map(([value, label]) => ({ value, label }))}
+                    options={Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => ({value, label}))}
                 />
-                <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalOpen(true)}>
+                <Button type="primary" icon={<PlusOutlined/>} onClick={() => setCreateModalOpen(true)}>
                     Новый заказ
                 </Button>
             </div>
@@ -144,12 +138,18 @@ const OrdersPage = () => {
             <OrderModal
                 open={createModalOpen}
                 onClose={() => setCreateModalOpen(false)}
-                onSuccess={() => { setCreateModalOpen(false); load() }}
+                onSuccess={() => {
+                    setCreateModalOpen(false);
+                    load()
+                }}
             />
             {detailOrderId && (
                 <OrderDetailModal
                     orderId={detailOrderId}
-                    onClose={() => { setDetailOrderId(null); load() }}
+                    onClose={() => {
+                        setDetailOrderId(null);
+                        load()
+                    }}
                 />
             )}
         </div>

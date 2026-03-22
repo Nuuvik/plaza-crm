@@ -3,16 +3,7 @@ import { Modal, Descriptions, Tag, Table, Button, Space, Input, message, Popconf
 import { getOrderById, confirmOrder, cancelOrder, payOrder, shipOrder, updateNotes } from '../../api/orders'
 import type { Order } from '../../types'
 import axios from "axios";
-
-const statusColors: Record<string, string> = {
-    NEW: 'blue', CONFIRMED: 'orange', PAID: 'green',
-    SHIPPED: 'purple', CANCELLED: 'red'
-}
-
-const statusLabels: Record<string, string> = {
-    NEW: 'Новый', CONFIRMED: 'Подтверждён', PAID: 'Оплачен',
-    SHIPPED: 'Отправлен', CANCELLED: 'Отменён'
-}
+import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from '../../constants/orderStatus'
 
 interface Props {
     orderId: number
@@ -85,7 +76,7 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                 <>
                     <Descriptions bordered size="small" style={{ marginBottom: 16 }}>
                         <Descriptions.Item label="Статус">
-                            <Tag color={statusColors[order.status]}>{statusLabels[order.status]}</Tag>
+                            <Tag color={ORDER_STATUS_COLORS[order.status]}>{ORDER_STATUS_LABELS[order.status]}</Tag>
                         </Descriptions.Item>
                         <Descriptions.Item label="Клиент">{order.customerName}</Descriptions.Item>
                         <Descriptions.Item label="Сумма">{order.totalPrice} ₽</Descriptions.Item>

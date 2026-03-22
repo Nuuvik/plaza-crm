@@ -7,16 +7,8 @@ import {
     RiseOutlined,
 } from '@ant-design/icons'
 import { getStats, type StatsResponse } from '../../api/stats'
+import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from '../../constants/orderStatus'
 
-const statusLabels: Record<string, string> = {
-    NEW: 'Новый', CONFIRMED: 'Подтверждён', PAID: 'Оплачен',
-    SHIPPED: 'Отправлен', CANCELLED: 'Отменён'
-}
-
-const statusColors: Record<string, string> = {
-    NEW: 'blue', CONFIRMED: 'orange', PAID: 'green',
-    SHIPPED: 'purple', CANCELLED: 'red'
-}
 
 const DashboardPage = () => {
     const [stats, setStats] = useState<StatsResponse | null>(null)
@@ -81,7 +73,7 @@ const DashboardPage = () => {
                         {stats?.ordersByStatus
                             ? Object.entries(stats.ordersByStatus).map(([status, count]) => (
                                 <div key={status} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                                    <Tag color={statusColors[status]}>{statusLabels[status]}</Tag>
+                                    <Tag color={ORDER_STATUS_COLORS[status]}>{ORDER_STATUS_LABELS[status]}</Tag>
                                     <span>{count} шт.</span>
                                 </div>
                             ))
