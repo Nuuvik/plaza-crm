@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Modal, Form, Input, InputNumber, message } from 'antd'
 import type { Product } from '../../types'
 import { createProduct, updateProduct } from '../../api/products'
+import axios from "axios";
 
 interface Props {
     open: boolean
@@ -16,19 +17,28 @@ const ProductModal = ({ open, product, onClose, onSuccess }: Props) => {
 
     useEffect(() => {
         if (open) {
-            product ? form.setFieldsValue(product) : form.resetFields()
+            if (product) {
+                form.setFieldsValue(product)
+            } else {
+                form.resetFields()
+            }
         }
-    }, [open, product])
+    }, [open, product, form])
 
     const onFinish = async (values: Omit<Product, 'id'>) => {
         try {
-            product
-                ? await updateProduct(product.id, values)
-                : await createProduct(values)
-            messageApi.success(product ? 'Товар обновлён' : 'Товар создан')
+            if (product) {
+                await updateProduct(product.id, values)
+                messageApi.success('Товар обновлён')
+            } else {
+                await createProduct(values)
+                messageApi.success('Товар создан')
+            }
             onSuccess()
-        } catch (e: any) {
-            messageApi.error(e.response?.data?.message || 'Ошибка')
+        } catch (e: unknown) {
+            if (axios.isAxiosError(e) && e.response?.status === 400) {
+                messageApi.error(e.response?.data?.message || 'Ошибка')
+            }
         }
     }
 

@@ -5,6 +5,7 @@ import { getCustomers } from '../../api/customers'
 import { getProducts } from '../../api/products'
 import { createOrder } from '../../api/orders'
 import type { Customer, Product } from '../../types'
+import axios from "axios";
 
 interface OrderItemForm {
     productId: number
@@ -27,13 +28,9 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
     const [messageApi, contextHolder] = message.useMessage()
 
     useEffect(() => {
-        if (open) {
-            getCustomers({ size: 100 }).then(r => setCustomers(r.data.content))
-            getProducts({ size: 100 }).then(r => setProducts(r.data.content))
-            setCustomerId(null)
-            setItems([])
-        }
-    }, [open])
+        getCustomers({ size: 100 }).then(r => setCustomers(r.data.content))
+        getProducts({ size: 100 }).then(r => setProducts(r.data.content))
+    }, [])
 
     const addItem = () => {
         if (!selectedProductId) return
@@ -62,8 +59,10 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
             await createOrder({ customerId, items })
             messageApi.success('Заказ создан')
             onSuccess()
-        } catch (e: any) {
-            messageApi.error(e.response?.data?.message || 'Ошибка')
+        } catch (e: unknown) {
+            if (axios.isAxiosError(e) && e.response?.status === 400) {
+                messageApi.error(e.response?.data?.message || 'Ошибка')
+            }
         }
     }
 
@@ -75,7 +74,7 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
         { title: 'Кол-во', dataIndex: 'quantity', key: 'quantity' },
         {
             title: '', key: 'actions',
-            render: (_: any, record: OrderItemForm) => (
+            render: (_: unknown, record: OrderItemForm) => (
                 <Button
                     size="small" danger icon={<DeleteOutlined />}
                     onClick={() => removeItem(record.productId)}

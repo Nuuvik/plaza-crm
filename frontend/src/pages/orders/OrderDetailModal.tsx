@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import {useState, useEffect, useCallback} from 'react'
 import { Modal, Descriptions, Tag, Table, Button, Space, Input, message, Popconfirm } from 'antd'
 import { getOrderById, confirmOrder, cancelOrder, payOrder, shipOrder, updateNotes } from '../../api/orders'
 import type { Order } from '../../types'
+import axios from "axios";
 
 const statusColors: Record<string, string> = {
     NEW: 'blue', CONFIRMED: 'orange', PAID: 'green',
@@ -23,8 +24,9 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
     const [notes, setNotes] = useState('')
     const [loading, setLoading] = useState(false)
     const [messageApi, contextHolder] = message.useMessage()
+    const [actionLoading, setActionLoading] = useState(false)
 
-    const load = async () => {
+    const load = useCallback(async () => {
         setLoading(true)
         try {
             const res = await getOrderById(orderId)
@@ -33,17 +35,22 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
         } finally {
             setLoading(false)
         }
-    }
+    }, [orderId])
 
-    useEffect(() => { load() }, [orderId])
+    useEffect(() => { load() }, [load])
 
-    const handleAction = async (action: () => Promise<any>) => {
+    const handleAction = async (action: () => Promise<unknown>) => {
+        setActionLoading(true)
         try {
             await action()
-            await load()
+            await load() // load стабилен благодаря useCallback
             messageApi.success('Статус обновлён')
-        } catch (e: any) {
-            messageApi.error(e.response?.data?.message || 'Ошибка')
+        } catch (e: unknown) {
+            if (axios.isAxiosError(e) && e.response?.status !== 500 && e.response?.status !== 403) {
+                messageApi.error(e.response?.data?.message || 'Ошибка')
+            }
+        } finally {
+            setActionLoading(false)
         }
     }
 
@@ -104,24 +111,41 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                                 onChange={(e) => setNotes(e.target.value)}
                                 rows={2}
                             />
-                            <Button onClick={handleSaveNotes}>Сохранить</Button>
+                            <Button onClick={handleSaveNotes} disabled={actionLoading}>
+                                Сохранить
+                            </Button>
                         </Space.Compact>
                     </div>
 
                     {order.status !== 'CANCELLED' && order.status !== 'SHIPPED' && (
                         <Space wrap>
                             {order.status === 'NEW' && (
-                                <Button type="primary" onClick={() => handleAction(() => confirmOrder(orderId))}>
+                                <Button
+                                    type="primary"
+                                    loading={actionLoading}
+                                    disabled={actionLoading}
+                                    onClick={() => handleAction(() => confirmOrder(orderId))}
+                                >
                                     Подтвердить
                                 </Button>
                             )}
                             {order.status === 'CONFIRMED' && (
-                                <Button type="primary" onClick={() => handleAction(() => payOrder(orderId))}>
+                                <Button
+                                    type="primary"
+                                    loading={actionLoading}
+                                    disabled={actionLoading}
+                                    onClick={() => handleAction(() => payOrder(orderId))}
+                                >
                                     Оплачен
                                 </Button>
                             )}
                             {order.status === 'PAID' && (
-                                <Button type="primary" onClick={() => handleAction(() => shipOrder(orderId))}>
+                                <Button
+                                    type="primary"
+                                    loading={actionLoading}
+                                    disabled={actionLoading}
+                                    onClick={() => handleAction(() => shipOrder(orderId))}
+                                >
                                     Отправить
                                 </Button>
                             )}
@@ -129,8 +153,9 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                                 title="Отменить заказ?"
                                 onConfirm={() => handleAction(() => cancelOrder(orderId))}
                                 okText="Да" cancelText="Нет"
+                                disabled={actionLoading}
                             >
-                                <Button danger>Отменить</Button>
+                                <Button danger disabled={actionLoading}>Отменить</Button>
                             </Popconfirm>
                         </Space>
                     )}

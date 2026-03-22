@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Modal, Form, Input, message } from 'antd'
 import type { Customer } from '../../types'
 import { createCustomer, updateCustomer } from '../../api/customers'
+import axios from "axios";
 
 interface Props {
     open: boolean
@@ -16,19 +17,28 @@ const CustomerModal = ({ open, customer, onClose, onSuccess }: Props) => {
 
     useEffect(() => {
         if (open) {
-            customer ? form.setFieldsValue(customer) : form.resetFields()
+            if (customer) {
+                form.setFieldsValue(customer)
+            } else {
+                form.resetFields()
+            }
         }
-    }, [open, customer])
+    }, [open, customer, form])
 
     const onFinish = async (values: Omit<Customer, 'id'>) => {
         try {
-            customer
-                ? await updateCustomer(customer.id, values)
-                : await createCustomer(values)
-            messageApi.success(customer ? 'Клиент обновлён' : 'Клиент создан')
+            if (customer) {
+                await updateCustomer(customer.id, values)
+                messageApi.success('Клиент обновлён')
+            } else {
+                await createCustomer(values)
+                messageApi.success('Клиент создан')
+            }
             onSuccess()
-        } catch (e: any) {
-            messageApi.error(e.response?.data?.message || 'Ошибка')
+        } catch (e: unknown) {
+            if (axios.isAxiosError(e) && e.response?.status === 400) {
+                messageApi.error(e.response?.data?.message || 'Ошибка')
+            }
         }
     }
 
