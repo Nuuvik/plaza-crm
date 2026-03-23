@@ -8,50 +8,49 @@ import CustomersPage from './pages/customers/CustomersPage'
 import OrdersPage from './pages/orders/OrdersPage'
 import ProductsPage from './pages/products/ProductsPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
+import UsersPage from './pages/users/UsersPage'
 import MainLayout from './components/MainLayout'
-import ErrorBoundary from './components/ErrorBoundary'
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuth } = useAuth()
-  return isAuth ? <>{children}</> : <Navigate to="/login" />
+    const { isAuth } = useAuth()
+    return isAuth ? <>{children}</> : <Navigate to="/login" />
 }
 
 const AppRoutes = () => {
-  const { logout } = useAuth()
+    const { logout } = useAuth()
 
-  useEffect(() => {
-    setLogoutFn(logout)
-  }, [logout])
+    useEffect(() => {
+        setLogoutFn(logout)
+    }, [logout])
 
-  return (
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={
-          <PrivateRoute>
-            <MainLayout />
-          </PrivateRoute>
-        }>
-          <Route index element={<Navigate to="/dashboard" />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="customers" element={<CustomersPage />} />
-          <Route path="orders" element={<OrdersPage />} />
-          <Route path="products" element={<ProductsPage />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-  )
+    return (
+        <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/" element={
+                <PrivateRoute>
+                    <MainLayout />
+                </PrivateRoute>
+            }>
+                <Route index element={<Navigate to="/dashboard" />} />
+                <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="customers" element={<CustomersPage />} />
+                <Route path="orders" element={<OrdersPage />} />
+                <Route path="products" element={<ProductsPage />} />
+                <Route path="users" element={<UsersPage />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+    )
 }
 
 function App() {
-  return (
-      <AuthProvider>
-          <ErrorBoundary>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-          </ErrorBoundary>
-      </AuthProvider>
-  )
+    return (
+        <AuthProvider>
+            <BrowserRouter>
+                <AppRoutes />
+            </BrowserRouter>
+        </AuthProvider>
+    )
 }
 
 export default App

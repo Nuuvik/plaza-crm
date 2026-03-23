@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Layout, Menu, Button, theme, Popconfirm, Avatar, Space } from 'antd'
+import { Layout, Menu, Button, theme, Popconfirm, Avatar, Dropdown, Space } from 'antd'
 import {
     DashboardOutlined,
     TeamOutlined,
@@ -7,26 +7,23 @@ import {
     BoxPlotOutlined,
     LogoutOutlined,
     UserOutlined,
+    UsergroupAddOutlined,
+    LockOutlined,
 } from '@ant-design/icons'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { removeToken } from '../store/auth'
 import { getMe } from '../api/auth'
 import type { User } from '../types'
+import ChangePasswordModal from '../pages/users/ChangePasswordModal'
 
 const { Sider, Content, Header } = Layout
-
-const menuItems = [
-    { key: '/dashboard', icon: <DashboardOutlined />, label: 'Дашборд' },
-    { key: '/customers', icon: <TeamOutlined />, label: 'Клиенты' },
-    { key: '/orders', icon: <ShoppingCartOutlined />, label: 'Заказы' },
-    { key: '/products', icon: <BoxPlotOutlined />, label: 'Товары' },
-]
 
 const MainLayout = () => {
     const navigate = useNavigate()
     const location = useLocation()
     const { token } = theme.useToken()
     const [user, setUser] = useState<User | null>(null)
+    const [changePasswordOpen, setChangePasswordOpen] = useState(false)
 
     useEffect(() => {
         getMe().then(r => setUser(r.data))
@@ -36,6 +33,25 @@ const MainLayout = () => {
         removeToken()
         navigate('/login')
     }
+
+    const menuItems = [
+        { key: '/dashboard', icon: <DashboardOutlined />, label: 'Дашборд' },
+        { key: '/customers', icon: <TeamOutlined />, label: 'Клиенты' },
+        { key: '/orders', icon: <ShoppingCartOutlined />, label: 'Заказы' },
+        { key: '/products', icon: <BoxPlotOutlined />, label: 'Товары' },
+        ...(user?.role === 'ADMIN' ? [
+            { key: '/users', icon: <UsergroupAddOutlined />, label: 'Пользователи' }
+        ] : [])
+    ]
+
+    const userDropdownItems = [
+        {
+            key: 'change-password',
+            icon: <LockOutlined />,
+            label: 'Сменить пароль',
+            onClick: () => setChangePasswordOpen(true)
+        }
+    ]
 
     return (
         <Layout style={{ minHeight: '100vh' }}>
@@ -71,13 +87,15 @@ const MainLayout = () => {
                     borderBottom: `1px solid ${token.colorBorderSecondary}`
                 }}>
                     {user && (
-                        <Space>
-                            <Avatar icon={<UserOutlined />} />
-                            <span>{user.username}</span>
-                            <span style={{ color: token.colorTextSecondary, fontSize: 12 }}>
-                {user.role}
-              </span>
-                        </Space>
+                        <Dropdown menu={{ items: userDropdownItems }} trigger={['click']}>
+                            <Space style={{ cursor: 'pointer' }}>
+                                <Avatar icon={<UserOutlined />} />
+                                <span>{user.username}</span>
+                                <span style={{ color: token.colorTextSecondary, fontSize: 12 }}>
+                                    {user.role}
+                                </span>
+                            </Space>
+                        </Dropdown>
                     )}
                     <Popconfirm
                         title="Выйти из системы?"
@@ -92,6 +110,11 @@ const MainLayout = () => {
                     <Outlet />
                 </Content>
             </Layout>
+
+            <ChangePasswordModal
+                open={changePasswordOpen}
+                onClose={() => setChangePasswordOpen(false)}
+            />
         </Layout>
     )
 }
