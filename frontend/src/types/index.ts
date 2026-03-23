@@ -37,6 +37,16 @@ export interface OrderItem {
     totalPrice: number
 }
 
+export interface OrderListItem {
+    id: number
+    customerId: number
+    customerName: string
+    status: 'NEW' | 'CONFIRMED' | 'PAID' | 'SHIPPED' | 'CANCELLED'
+    totalPrice: number
+    createdAt: string
+    notes: string
+}
+
 export interface Order {
     id: number
     customerId: number

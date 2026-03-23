@@ -3,7 +3,7 @@ import {Table, Button, Space, Popconfirm, message, Tag, Select} from 'antd'
 import {PlusOutlined} from '@ant-design/icons'
 import {useSearchParams} from 'react-router-dom'
 import type {ColumnsType} from 'antd/es/table'
-import type {Order} from '../../types'
+import type {OrderListItem} from '../../types'
 import {getOrders, deleteOrder} from '../../api/orders'
 import OrderModal from './OrderModal'
 import OrderDetailModal from './OrderDetailModal'
@@ -16,7 +16,7 @@ const OrdersPage = () => {
     const page = parseInt(searchParams.get('page') ?? '1') - 1
     const statusFilter = searchParams.get('status') ?? undefined
 
-    const [orders, setOrders] = useState<Order[]>([])
+    const [orders, setOrders] = useState<OrderListItem[]>([])
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
     const [createModalOpen, setCreateModalOpen] = useState(false)
@@ -69,7 +69,7 @@ const OrdersPage = () => {
         })
     }
 
-    const columns: ColumnsType<Order> = [
+    const columns: ColumnsType<OrderListItem> = [
         {title: '№', dataIndex: 'id', key: 'id', width: 60},
         {title: 'Клиент', dataIndex: 'customerName', key: 'customerName'},
         {

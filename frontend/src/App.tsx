@@ -9,6 +9,7 @@ import OrdersPage from './pages/orders/OrdersPage'
 import ProductsPage from './pages/products/ProductsPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import MainLayout from './components/MainLayout'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuth } = useAuth()
@@ -44,9 +45,11 @@ const AppRoutes = () => {
 function App() {
   return (
       <AuthProvider>
+          <ErrorBoundary>
         <BrowserRouter>
           <AppRoutes />
         </BrowserRouter>
+          </ErrorBoundary>
       </AuthProvider>
   )
 }

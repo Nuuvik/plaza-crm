@@ -1,6 +1,6 @@
 import {useState, useEffect, useCallback} from 'react'
 import { Modal, Table, Tag } from 'antd'
-import type { Order } from '../../types'
+import type {OrderListItem} from '../../types'
 import { getOrdersByCustomer } from '../../api/orders'
 import type { ColumnsType } from 'antd/es/table'
 import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from '../../constants/orderStatus'
@@ -12,7 +12,7 @@ interface Props {
 }
 
 const CustomerOrdersModal = ({ customerId, customerName, onClose }: Props) => {
-    const [orders, setOrders] = useState<Order[]>([])
+    const [orders, setOrders] = useState<OrderListItem[]>([])
     const [total, setTotal] = useState(0)
     const [page, setPage] = useState(0)
     const [loading, setLoading] = useState(false)
@@ -32,7 +32,7 @@ const CustomerOrdersModal = ({ customerId, customerName, onClose }: Props) => {
         load()
     }, [load])
 
-    const columns: ColumnsType<Order> = [
+    const columns: ColumnsType<OrderListItem> = [
         { title: '№', dataIndex: 'id', key: 'id', width: 60 },
         {
             title: 'Статус', dataIndex: 'status', key: 'status',

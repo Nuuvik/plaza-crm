@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Table, Button, Input, Space, Popconfirm, message, Tag } from 'antd'
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
-import { useSearchParams } from 'react-router-dom'
-import type { ColumnsType } from 'antd/es/table'
-import type { Product } from '../../types'
-import { getProducts, deleteProduct } from '../../api/products'
+import {useCallback, useEffect, useState} from 'react'
+import {Button, Input, message, Popconfirm, Space, Table, Tag} from 'antd'
+import {PlusOutlined, SearchOutlined} from '@ant-design/icons'
+import {useSearchParams} from 'react-router-dom'
+import type {ColumnsType} from 'antd/es/table'
+import type {Product} from '../../types'
+import {deleteProduct, getProducts} from '../../api/products'
 import ProductModal from './ProductModal'
-import { useDebouncedCallback } from 'use-debounce'
+import {useDebouncedCallback} from 'use-debounce'
 import axios from 'axios'
 
 const ProductsPage = () => {
@@ -17,6 +17,7 @@ const ProductsPage = () => {
     const [products, setProducts] = useState<Product[]>([])
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
+    const [searchInput, setSearchInput] = useState(search)
     const [modalOpen, setModalOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
     const [messageApi, contextHolder] = message.useMessage()
@@ -24,13 +25,17 @@ const ProductsPage = () => {
     const load = useCallback(async () => {
         setLoading(true)
         try {
-            const res = await getProducts({ name: search || undefined, page, size: 10 })
+            const res = await getProducts({name: search || undefined, page, size: 10})
             setProducts(res.data.content)
             setTotal(res.data.totalElements)
         } finally {
             setLoading(false)
         }
     }, [page, search])
+
+    useEffect(() => {
+        setSearchInput(search)
+    }, [search])
 
     useEffect(() => {
         load()
@@ -78,15 +83,23 @@ const ProductsPage = () => {
     }, 300)
 
     const columns: ColumnsType<Product> = [
-        { title: 'Артикул', dataIndex: 'sku', key: 'sku',
-            render: (v) => <Tag color="purple">{v}</Tag> },
-        { title: 'Название', dataIndex: 'name', key: 'name' },
-        { title: 'Цена', dataIndex: 'price', key: 'price',
-            render: (v) => `${v} ₽` },
-        { title: 'Автомобиль', dataIndex: 'car', key: 'car',
-            render: (v) => v || '—' },
-        { title: 'Остаток', dataIndex: 'stockQuantity', key: 'stockQuantity',
-            render: (v) => <Tag color={v > 0 ? 'green' : 'red'}>{v} шт.</Tag> },
+        {
+            title: 'Артикул', dataIndex: 'sku', key: 'sku',
+            render: (v) => <Tag color="purple">{v}</Tag>
+        },
+        {title: 'Название', dataIndex: 'name', key: 'name'},
+        {
+            title: 'Цена', dataIndex: 'price', key: 'price',
+            render: (v) => `${v} ₽`
+        },
+        {
+            title: 'Автомобиль', dataIndex: 'car', key: 'car',
+            render: (v) => v || '—'
+        },
+        {
+            title: 'Остаток', dataIndex: 'stockQuantity', key: 'stockQuantity',
+            render: (v) => <Tag color={v > 0 ? 'green' : 'red'}>{v} шт.</Tag>
+        },
         {
             title: 'Действия', key: 'actions',
             render: (_, record) => (
@@ -107,17 +120,23 @@ const ProductsPage = () => {
     return (
         <div>
             {contextHolder}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 16}}>
                 <Input
                     placeholder="Поиск по названию"
-                    prefix={<SearchOutlined />}
-                    style={{ width: 300 }}
-                    defaultValue={search}
-                    onChange={(e) => handleSearch(e.target.value)}
+                    prefix={<SearchOutlined/>}
+                    style={{width: 300}}
+                    value={searchInput}
+                    onChange={(e) => {
+                        setSearchInput(e.target.value)
+                        handleSearch(e.target.value)
+                    }}
                     allowClear
-                    onClear={() => handleSearch('')}
+                    onClear={() => {
+                        setSearchInput('')
+                        handleSearch('')
+                    }}
                 />
-                <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                <Button type="primary" icon={<PlusOutlined/>} onClick={handleCreate}>
                     Новый товар
                 </Button>
             </div>
@@ -137,7 +156,10 @@ const ProductsPage = () => {
                 open={modalOpen}
                 product={editingProduct}
                 onClose={() => setModalOpen(false)}
-                onSuccess={() => { setModalOpen(false); load() }}
+                onSuccess={() => {
+                    setModalOpen(false);
+                    load()
+                }}
             />
         </div>
     )

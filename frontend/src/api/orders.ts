@@ -1,12 +1,12 @@
 import api from '.'
-import type { Order, Page } from '../types'
+import type { Order, OrderListItem, Page } from '../types'
 
 export const getOrders = (params?: {
     status?: string
     customerId?: number
     page?: number
     size?: number
-}) => api.get<Page<Order>>('/orders', { params })
+}) => api.get<Page<OrderListItem>>('/orders', { params })
 
 export const getOrderById = (id: number) =>
     api.get<Order>(`/orders/${id}`)
@@ -41,4 +41,4 @@ export const removeItem = (orderId: number, productId: number) =>
 export const getOrdersByCustomer = (customerId: number, params?: {
     page?: number
     size?: number
-}) => api.get<Page<Order>>(`/customers/${customerId}/orders`, { params })
+}) => api.get<Page<OrderListItem>>(`/customers/${customerId}/orders`, { params })
