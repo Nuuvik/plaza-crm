@@ -29,4 +29,6 @@ public class ProductRequest {
 
     @Min(0)
     private int stockQuantity;
+
+    private String additions;
 }

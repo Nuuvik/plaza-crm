@@ -41,6 +41,7 @@ public class ProductService {
         product.setPrice(request.getPrice());
         product.setCar(request.getCar());
         product.setStockQuantity(request.getStockQuantity());
+        product.setAdditions(request.getAdditions());
 
         Product saved = repository.save(product);
         auditService.log("PRODUCT", saved.getId(), "CREATE");
@@ -71,6 +72,7 @@ public class ProductService {
         product.setPrice(request.getPrice());
         product.setCar(request.getCar());
         product.setStockQuantity(request.getStockQuantity());
+        product.setAdditions(request.getAdditions());
         repository.save(product);
 
         auditService.log("PRODUCT", id, "UPDATE");
@@ -130,7 +132,8 @@ public class ProductService {
                 product.getName(),
                 product.getPrice(),
                 product.getCar(),
-                product.getStockQuantity()
+                product.getStockQuantity(),
+                product.getAdditions()
         );
     }
 }

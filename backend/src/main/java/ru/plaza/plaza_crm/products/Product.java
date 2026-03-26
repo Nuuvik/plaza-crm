@@ -32,6 +32,8 @@ public class Product extends BaseEntity {
     @Column(name = "stock_quantity")
     private int stockQuantity;
 
+    private String additions;
+
 
     public void decreaseStock(int qty) {
         if (stockQuantity < qty) {

@@ -21,6 +21,7 @@ import ru.plaza.plaza_crm.util.BaseEntity;
 import ru.plaza.plaza_crm.util.exception.BadRequestException;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +54,18 @@ public class Order extends BaseEntity {
     @Setter
     @Column(length = 1000)
     private String notes;
+
+    /**
+     * источник, откуда поступил заказ
+     */
+    @Setter
+    private String source;
+
+    @Setter
+    private LocalDateTime paymentDate;
+
+    @Setter
+    private String paymentMethod;
 
     public void initAsNew(Customer customer) {
         this.customer = customer;
