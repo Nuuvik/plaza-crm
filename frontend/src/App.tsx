@@ -9,6 +9,7 @@ import OrdersPage from './pages/orders/OrdersPage'
 import ProductsPage from './pages/products/ProductsPage'
 import DashboardPage from './pages/dashboard/DashboardPage'
 import UsersPage from './pages/users/UsersPage'
+import AuditLogsPage from './pages/audit/AuditLogsPage'
 import MainLayout from './components/MainLayout'
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
@@ -26,17 +27,21 @@ const AppRoutes = () => {
     return (
         <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/" element={
-                <PrivateRoute>
-                    <MainLayout />
-                </PrivateRoute>
-            }>
+            <Route
+                path="/"
+                element={
+                    <PrivateRoute>
+                        <MainLayout />
+                    </PrivateRoute>
+                }
+            >
                 <Route index element={<Navigate to="/dashboard" />} />
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="customers" element={<CustomersPage />} />
                 <Route path="orders" element={<OrdersPage />} />
                 <Route path="products" element={<ProductsPage />} />
                 <Route path="users" element={<UsersPage />} />
+                <Route path="audit-logs" element={<AuditLogsPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" />} />
         </Routes>

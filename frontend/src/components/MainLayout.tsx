@@ -9,6 +9,8 @@ import {
     UserOutlined,
     UsergroupAddOutlined,
     LockOutlined,
+    AuditOutlined,
+    SettingOutlined,
 } from '@ant-design/icons'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { removeToken } from '../store/auth'
@@ -34,14 +36,36 @@ const MainLayout = () => {
         navigate('/login')
     }
 
+    // Определяем открытые подменю на основе текущего пути
+    const adminPaths = ['/users', '/audit-logs']
+    const defaultOpenKeys = adminPaths.includes(location.pathname) ? ['admin'] : []
+
     const menuItems = [
         { key: '/dashboard', icon: <DashboardOutlined />, label: 'Дашборд' },
         { key: '/customers', icon: <TeamOutlined />, label: 'Клиенты' },
         { key: '/orders', icon: <ShoppingCartOutlined />, label: 'Заказы' },
         { key: '/products', icon: <BoxPlotOutlined />, label: 'Товары' },
-        ...(user?.role === 'ADMIN' ? [
-            { key: '/users', icon: <UsergroupAddOutlined />, label: 'Пользователи' }
-        ] : [])
+        ...(user?.role === 'ADMIN'
+            ? [
+                {
+                    key: 'admin',
+                    icon: <SettingOutlined />,
+                    label: 'Служебные',
+                    children: [
+                        {
+                            key: '/users',
+                            icon: <UsergroupAddOutlined />,
+                            label: 'Пользователи',
+                        },
+                        {
+                            key: '/audit-logs',
+                            icon: <AuditOutlined />,
+                            label: 'Логи',
+                        },
+                    ],
+                },
+            ]
+            : []),
     ]
 
     const userDropdownItems = [
@@ -49,43 +73,51 @@ const MainLayout = () => {
             key: 'change-password',
             icon: <LockOutlined />,
             label: 'Сменить пароль',
-            onClick: () => setChangePasswordOpen(true)
-        }
+            onClick: () => setChangePasswordOpen(true),
+        },
     ]
 
     return (
         <Layout style={{ minHeight: '100vh' }}>
             <Sider theme="dark" width={220}>
-                <div style={{
-                    height: 64,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#fff',
-                    fontSize: 18,
-                    fontWeight: 'bold',
-                    borderBottom: '1px solid #303030'
-                }}>
+                <div
+                    style={{
+                        height: 64,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#fff',
+                        fontSize: 18,
+                        fontWeight: 'bold',
+                        borderBottom: '1px solid #303030',
+                    }}
+                >
                     Plaza CRM
                 </div>
                 <Menu
                     theme="dark"
                     mode="inline"
                     selectedKeys={[location.pathname]}
+                    defaultOpenKeys={defaultOpenKeys}
                     items={menuItems}
-                    onClick={({ key }) => navigate(key)}
+                    onClick={({ key }) => {
+                        // Не навигируем при клике на группу
+                        if (key !== 'admin') navigate(key)
+                    }}
                 />
             </Sider>
             <Layout>
-                <Header style={{
-                    background: token.colorBgContainer,
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    alignItems: 'center',
-                    paddingInline: 24,
-                    gap: 12,
-                    borderBottom: `1px solid ${token.colorBorderSecondary}`
-                }}>
+                <Header
+                    style={{
+                        background: token.colorBgContainer,
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        alignItems: 'center',
+                        paddingInline: 24,
+                        gap: 12,
+                        borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                    }}
+                >
                     {user && (
                         <Dropdown menu={{ items: userDropdownItems }} trigger={['click']}>
                             <Space style={{ cursor: 'pointer' }}>
