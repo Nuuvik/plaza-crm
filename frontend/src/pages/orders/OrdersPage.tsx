@@ -81,7 +81,7 @@ const OrdersPage = () => {
             render: (v) => `${v} ₽`
         },
         {
-            title: 'Дата', dataIndex: 'createdAt', key: 'createdAt',
+            title: 'Дата создания', dataIndex: 'createdAt', key: 'createdAt',
             render: (v) => new Date(v).toLocaleDateString('ru-RU')
         },
         {

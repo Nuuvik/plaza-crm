@@ -35,6 +35,9 @@ export const updateNotes = (id: number, notes: string) =>
 export const addItem = (orderId: number, productId: number, quantity: number) =>
     api.post<Order>(`/orders/${orderId}/items`, { productId, quantity })
 
+export const updateItem = (orderId: number, productId: number, quantity: number) =>
+    api.put<Order>(`/orders/${orderId}/items`, { productId, quantity })
+
 export const removeItem = (orderId: number, productId: number) =>
     api.delete<Order>(`/orders/${orderId}/items/${productId}`)
 
