@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/products")
@@ -35,9 +38,24 @@ public class ProductController {
         return service.findAll(car, name, sku, pageable);
     }
 
+    // Важно: literal path /archived должен быть выше /{id}
+    @GetMapping("/archived")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<ProductResponse> getArchived(@RequestParam(required = false) String name,
+                                             @RequestParam(required = false) String sku,
+                                             Pageable pageable) {
+        return service.findAllArchived(name, sku, pageable);
+    }
+
     @GetMapping("/{id}")
     public ProductResponse getById(@PathVariable Long id) {
         return service.findById(id);
+    }
+
+    @GetMapping("/{id}/orders-count")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Long> getOrdersCount(@PathVariable Long id) {
+        return Map.of("count", service.countOrders(id));
     }
 
     @PostMapping
@@ -58,6 +76,18 @@ public class ProductController {
     @PreAuthorize("hasRole('ADMIN')")
     public void delete(@PathVariable Long id) {
         service.delete(id);
+    }
+
+    @PatchMapping("/{id}/archive")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ProductResponse archive(@PathVariable Long id) {
+        return service.archive(id);
+    }
+
+    @PatchMapping("/{id}/unarchive")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ProductResponse unarchive(@PathVariable Long id) {
+        return service.unarchive(id);
     }
 
     @GetMapping("/sku/{sku}")

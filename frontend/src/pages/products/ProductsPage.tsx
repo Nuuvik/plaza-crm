@@ -1,18 +1,28 @@
-import {useCallback, useEffect, useState} from 'react'
-import {Button, Input, message, Popconfirm, Space, Table, Tag} from 'antd'
-import {PlusOutlined, SearchOutlined} from '@ant-design/icons'
-import {useSearchParams} from 'react-router-dom'
-import type {ColumnsType} from 'antd/es/table'
-import type {Product} from '../../types'
-import {deleteProduct, getProducts} from '../../api/products'
+import { useCallback, useEffect, useState } from 'react'
+import { Button, Input, message, Modal, Space, Table, Tabs, Tag } from 'antd'
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { useSearchParams } from 'react-router-dom'
+import type { ColumnsType } from 'antd/es/table'
+import type { Product } from '../../types'
+import {
+    archiveProduct,
+    deleteProduct,
+    getArchivedProducts,
+    getProductOrdersCount,
+    getProducts,
+    unarchiveProduct,
+} from '../../api/products'
 import ProductModal from './ProductModal'
-import {useDebouncedCallback} from 'use-debounce'
-import axios from 'axios'
+import { useDebouncedCallback } from 'use-debounce'
+
+const pluralOrders = (n: number) =>
+    n === 1 ? `${n} заказе` : `${n} заказах`
 
 const ProductsPage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const page = parseInt(searchParams.get('page') ?? '1') - 1
     const search = searchParams.get('name') ?? ''
+    const tab = (searchParams.get('tab') ?? 'active') as 'active' | 'archived'
 
     const [products, setProducts] = useState<Product[]>([])
     const [total, setTotal] = useState(0)
@@ -25,13 +35,19 @@ const ProductsPage = () => {
     const load = useCallback(async () => {
         setLoading(true)
         try {
-            const res = await getProducts({name: search || undefined, page, size: 10})
-            setProducts(res.data.content)
-            setTotal(res.data.totalElements)
+            if (tab === 'active') {
+                const res = await getProducts({ name: search || undefined, page, size: 10 })
+                setProducts(res.data.content)
+                setTotal(res.data.totalElements)
+            } else {
+                const res = await getArchivedProducts({ name: search || undefined, page, size: 10 })
+                setProducts(res.data.content)
+                setTotal(res.data.totalElements)
+            }
         } finally {
             setLoading(false)
         }
-    }, [page, search])
+    }, [page, search, tab])
 
     useEffect(() => {
         setSearchInput(search)
@@ -41,15 +57,61 @@ const ProductsPage = () => {
         load()
     }, [load])
 
+    const handleDeleteClick = async (id: number) => {
+        try {
+            const res = await getProductOrdersCount(id)
+            const count = res.data.count
+
+            if (count > 0) {
+                Modal.confirm({
+                    title: 'Нельзя удалить товар',
+                    content: `Товар присутствует в ${pluralOrders(count)}. Хотите переместить его в архив? Товар будет скрыт из каталога, но история заказов сохранится.`,
+                    okText: 'В архив',
+                    cancelText: 'Отмена',
+                    onOk: () => handleArchive(id),
+                })
+            } else {
+                Modal.confirm({
+                    title: 'Удалить товар?',
+                    content: 'Товар не используется ни в одном заказе и будет удалён без возможности восстановления.',
+                    okText: 'Удалить',
+                    okButtonProps: { danger: true },
+                    cancelText: 'Отмена',
+                    onOk: () => handleDelete(id),
+                })
+            }
+        } catch {
+            messageApi.error('Не удалось получить информацию о товаре')
+        }
+    }
+
     const handleDelete = async (id: number) => {
         try {
             await deleteProduct(id)
             messageApi.success('Товар удалён')
             load()
-        } catch (e: unknown) {
-            if (axios.isAxiosError(e) && e.response?.status === 400) {
-                messageApi.error(e.response?.data?.message || 'Ошибка')
-            }
+        } catch {
+            messageApi.error('Не удалось удалить товар')
+        }
+    }
+
+    const handleArchive = async (id: number) => {
+        try {
+            await archiveProduct(id)
+            messageApi.success('Товар перемещён в архив')
+            load()
+        } catch {
+            messageApi.error('Не удалось архивировать товар')
+        }
+    }
+
+    const handleUnarchive = async (id: number) => {
+        try {
+            await unarchiveProduct(id)
+            messageApi.success('Товар восстановлен из архива')
+            load()
+        } catch {
+            messageApi.error('Не удалось восстановить товар')
         }
     }
 
@@ -72,30 +134,26 @@ const ProductsPage = () => {
 
     const handleSearch = useDebouncedCallback((val: string) => {
         setSearchParams(prev => {
-            if (val) {
-                prev.set('name', val)
-            } else {
-                prev.delete('name')
-            }
+            if (val) prev.set('name', val)
+            else prev.delete('name')
             prev.set('page', '1')
             return prev
         })
     }, 300)
 
-    const columns: ColumnsType<Product> = [
+    const handleTabChange = (key: string) => {
+        setSearchParams({ tab: key, page: '1' })
+        setSearchInput('')
+    }
+
+    const activeColumns: ColumnsType<Product> = [
         {
             title: 'Артикул', dataIndex: 'sku', key: 'sku',
             render: (v) => <Tag color="purple">{v}</Tag>
         },
-        {title: 'Название', dataIndex: 'name', key: 'name'},
-        {
-            title: 'Цена', dataIndex: 'price', key: 'price',
-            render: (v) => `${v} ₽`
-        },
-        {
-            title: 'Автомобиль', dataIndex: 'car', key: 'car',
-            render: (v) => v || '—'
-        },
+        { title: 'Название', dataIndex: 'name', key: 'name' },
+        { title: 'Цена', dataIndex: 'price', key: 'price', render: (v) => `${v} ₽` },
+        { title: 'Автомобиль', dataIndex: 'car', key: 'car', render: (v) => v || '—' },
         {
             title: 'Остаток', dataIndex: 'stockQuantity', key: 'stockQuantity',
             render: (v) => <Tag color={v > 0 ? 'green' : 'red'}>{v} шт.</Tag>
@@ -105,14 +163,28 @@ const ProductsPage = () => {
             render: (_, record) => (
                 <Space>
                     <Button size="small" onClick={() => handleEdit(record)}>Изменить</Button>
-                    <Popconfirm
-                        title="Удалить товар?"
-                        onConfirm={() => handleDelete(record.id)}
-                        okText="Да" cancelText="Нет"
-                    >
-                        <Button size="small" danger>Удалить</Button>
-                    </Popconfirm>
+                    <Button size="small" danger onClick={() => handleDeleteClick(record.id)}>
+                        Удалить
+                    </Button>
                 </Space>
+            )
+        }
+    ]
+
+    const archivedColumns: ColumnsType<Product> = [
+        {
+            title: 'Артикул', dataIndex: 'sku', key: 'sku',
+            render: (v) => <Tag color="default">{v}</Tag>
+        },
+        { title: 'Название', dataIndex: 'name', key: 'name' },
+        { title: 'Цена', dataIndex: 'price', key: 'price', render: (v) => `${v} ₽` },
+        { title: 'Автомобиль', dataIndex: 'car', key: 'car', render: (v) => v || '—' },
+        {
+            title: 'Действия', key: 'actions',
+            render: (_, record) => (
+                <Button size="small" onClick={() => handleUnarchive(record.id)}>
+                    Восстановить
+                </Button>
             )
         }
     ]
@@ -120,11 +192,19 @@ const ProductsPage = () => {
     return (
         <div>
             {contextHolder}
-            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 16}}>
+            <Tabs
+                activeKey={tab}
+                onChange={handleTabChange}
+                items={[
+                    { key: 'active', label: 'Активные' },
+                    { key: 'archived', label: 'Архив' },
+                ]}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
                 <Input
                     placeholder="Поиск по названию"
-                    prefix={<SearchOutlined/>}
-                    style={{width: 300}}
+                    prefix={<SearchOutlined />}
+                    style={{ width: 300 }}
                     value={searchInput}
                     onChange={(e) => {
                         setSearchInput(e.target.value)
@@ -136,12 +216,14 @@ const ProductsPage = () => {
                         handleSearch('')
                     }}
                 />
-                <Button type="primary" icon={<PlusOutlined/>} onClick={handleCreate}>
-                    Новый товар
-                </Button>
+                {tab === 'active' && (
+                    <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                        Новый товар
+                    </Button>
+                )}
             </div>
             <Table
-                columns={columns}
+                columns={tab === 'active' ? activeColumns : archivedColumns}
                 dataSource={products}
                 rowKey="id"
                 loading={loading}
@@ -157,7 +239,7 @@ const ProductsPage = () => {
                 product={editingProduct}
                 onClose={() => setModalOpen(false)}
                 onSuccess={() => {
-                    setModalOpen(false);
+                    setModalOpen(false)
                     load()
                 }}
             />

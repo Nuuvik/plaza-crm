@@ -68,4 +68,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT o.status, COUNT(o) FROM Order o WHERE o.deleted = false GROUP BY o.status")
     List<Object[]> countByStatus();
+
+    @Query("""
+    SELECT COUNT(DISTINCT o.id) FROM Order o
+    JOIN o.items i
+    WHERE i.product.id = :productId
+    AND o.deleted = false
+    AND i.deleted = false
+    """)
+    long countOrdersWithProduct(@Param("productId") Long productId);
 }

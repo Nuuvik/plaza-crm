@@ -70,6 +70,7 @@ public class Order extends BaseEntity {
     public void initAsNew(Customer customer) {
         this.customer = customer;
         this.status = OrderStatus.NEW;
+        this.source = "CRM"; //TODO change
     }
 
     public void confirm() {

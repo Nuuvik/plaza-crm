@@ -33,6 +33,8 @@ public class Product extends BaseEntity {
 
     private String additions;
 
+    @Column(nullable = false)
+    private boolean archived = false;
 
     public void decreaseStock(int qty) {
         if (stockQuantity < qty) {

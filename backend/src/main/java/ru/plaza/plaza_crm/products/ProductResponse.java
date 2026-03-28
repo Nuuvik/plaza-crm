@@ -14,8 +14,10 @@ public class ProductResponse {
     private String car;
     private int stockQuantity;
     private String additions;
+    private boolean archived;
 
-    public ProductResponse(Long id, String sku, String name, BigDecimal price, String car, int stockQuantity, String additions) {
+    public ProductResponse(Long id, String sku, String name, BigDecimal price,
+                           String car, int stockQuantity, String additions, boolean archived) {
         this.id = id;
         this.sku = sku;
         this.name = name;
@@ -23,5 +25,6 @@ public class ProductResponse {
         this.car = car;
         this.stockQuantity = stockQuantity;
         this.additions = additions;
+        this.archived = archived;
     }
 }

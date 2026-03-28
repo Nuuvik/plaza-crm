@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.plaza.plaza_crm.audit.AuditService;
+import ru.plaza.plaza_crm.orders.OrderRepository;
 import ru.plaza.plaza_crm.util.exception.BadRequestException;
 import ru.plaza.plaza_crm.util.exception.ResourceNotFoundException;
 
@@ -18,16 +19,18 @@ public class ProductService {
 
     private final ProductRepository repository;
     private final AuditService auditService;
+    private final OrderRepository orderRepository;
 
     @Autowired
-    public ProductService(ProductRepository repository, AuditService auditService) {
+    public ProductService(ProductRepository repository, AuditService auditService,
+                          OrderRepository orderRepository) {
         this.repository = repository;
         this.auditService = auditService;
+        this.orderRepository = orderRepository;
     }
 
     @Transactional
     public ProductResponse create(ProductRequest request) {
-
         log.info("Creating product {}", request.getName());
 
         if (repository.existsBySkuAndDeletedFalse(request.getSku())) {
@@ -47,13 +50,11 @@ public class ProductService {
         auditService.log("PRODUCT", saved.getId(), "CREATE");
 
         log.info("Product created id={}", saved.getId());
-
         return mapToResponse(saved);
     }
 
     @Transactional
     public ProductResponse update(Long id, ProductRequest request) {
-
         log.info("Updating product id={}", id);
 
         Product product = repository.findByIdAndDeletedFalse(id)
@@ -76,13 +77,11 @@ public class ProductService {
         repository.save(product);
 
         auditService.log("PRODUCT", id, "UPDATE");
-
         return mapToResponse(product);
     }
 
     @Transactional
     public void delete(Long id) {
-
         log.info("Deleting product id={}", id);
 
         Product product = repository.findByIdAndDeletedFalse(id)
@@ -91,27 +90,80 @@ public class ProductService {
                     return new ResourceNotFoundException("Product not found");
                 });
 
+        long orderCount = orderRepository.countOrdersWithProduct(id);
+        if (orderCount > 0) {
+            log.warn("Cannot delete product id={}: used in {} orders", id, orderCount);
+            throw new BadRequestException("Product is used in orders. Use archive instead.");
+        }
+
         product.setDeleted(true);
         repository.save(product);
         auditService.log("PRODUCT", id, "DELETE");
     }
 
+    @Transactional
+    public ProductResponse archive(Long id) {
+        log.info("Archiving product id={}", id);
+
+        Product product = repository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+        if (product.isArchived()) {
+            throw new BadRequestException("Product is already archived");
+        }
+
+        product.setArchived(true);
+        repository.save(product);
+        auditService.log("PRODUCT", id, "ARCHIVE");
+
+        log.info("Product archived id={}", id);
+        return mapToResponse(product);
+    }
+
+    @Transactional
+    public ProductResponse unarchive(Long id) {
+        log.info("Unarchiving product id={}", id);
+
+        Product product = repository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+        if (!product.isArchived()) {
+            throw new BadRequestException("Product is not archived");
+        }
+
+        product.setArchived(false);
+        repository.save(product);
+        auditService.log("PRODUCT", id, "UNARCHIVE");
+
+        log.info("Product unarchived id={}", id);
+        return mapToResponse(product);
+    }
+
+    @Transactional(readOnly = true)
+    public long countOrders(Long id) {
+        if (!repository.findByIdAndDeletedFalse(id).isPresent()) {
+            throw new ResourceNotFoundException("Product not found");
+        }
+        return orderRepository.countOrdersWithProduct(id);
+    }
 
     @Transactional(readOnly = true)
     public Page<ProductResponse> findAll(String car, String name, String sku, Pageable pageable) {
-        return repository.search(car, name, sku, pageable)
-                .map(this::mapToResponse);
+        return repository.search(car, name, sku, pageable).map(this::mapToResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProductResponse> findAllArchived(String name, String sku, Pageable pageable) {
+        return repository.searchArchived(name, sku, pageable).map(this::mapToResponse);
     }
 
     @Transactional(readOnly = true)
     public ProductResponse findById(Long id) {
-
         Product product = repository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> {
                     log.warn("Product not found: id={}", id);
                     return new ResourceNotFoundException("Product not found");
                 });
-
         return mapToResponse(product);
     }
 
@@ -133,7 +185,8 @@ public class ProductService {
                 product.getPrice(),
                 product.getCar(),
                 product.getStockQuantity(),
-                product.getAdditions()
+                product.getAdditions(),
+                product.isArchived()
         );
     }
 }

@@ -26,6 +26,7 @@ export interface Product {
     price: number
     car: string
     stockQuantity: number
+    archived: boolean
 }
 
 export interface OrderItem {

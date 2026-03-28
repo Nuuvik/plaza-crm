@@ -50,7 +50,7 @@ public class OrderService {
 
         for (OrderItemRequest itemRequest : request.getItems()) {
             log.info("Adding productId={} quantity={}", itemRequest.getProductId(), itemRequest.getQuantity());
-            Product product = productRepository.findByIdAndDeletedFalse(itemRequest.getProductId())
+            Product product = productRepository.findByIdAndDeletedFalseAndArchivedFalse(itemRequest.getProductId())
                     .orElseThrow(() -> {
                         log.warn("Product not found: id={}", itemRequest.getProductId());
                         return new ResourceNotFoundException("Product not found");
@@ -212,7 +212,7 @@ public class OrderService {
                     return new ResourceNotFoundException("Order not found");
                 });
 
-        Product product = productRepository.findByIdAndDeletedFalse(productId)
+        Product product = productRepository.findByIdAndDeletedFalseAndArchivedFalse(productId)
                 .orElseThrow(() -> {
                     log.warn("Product not found: id={}", productId);
                     return new ResourceNotFoundException("Product not found");
