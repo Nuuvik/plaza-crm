@@ -107,6 +107,17 @@ public class OrderService {
                     return new ResourceNotFoundException("Order not found");
                 });
 
+        // Возвращаем остатки, если заказ не был отменён (там уже возвращено)
+        // и не отправлен (товар физически ушёл)
+        if (order.getStatus() != OrderStatus.CANCELLED && order.getStatus() != OrderStatus.SHIPPED) {
+            for (OrderItem item : order.getItems()) {
+                if (!Boolean.TRUE.equals(item.getDeleted())) {
+                    item.getProduct().increaseStock(item.getQuantity());
+                }
+            }
+            log.info("Stock restored for deleted order id={}", id);
+        }
+
         order.setDeleted(true);
         orderRepository.save(order);
         auditService.log("ORDER", id, "DELETE");
