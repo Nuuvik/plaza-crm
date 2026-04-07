@@ -59,10 +59,14 @@ export interface Order {
     items: OrderItem[]
 }
 
-export interface Page<T> {
-    content: T[]
+export interface PageMeta {
     totalElements: number
     totalPages: number
     size: number
     number: number
+}
+
+export interface Page<T> {
+    content: T[]
+    page: PageMeta
 }

@@ -28,7 +28,7 @@ const OrdersPage = () => {
         try {
             const res = await getOrders({status: statusFilter, page, size: 10})
             setOrders(res.data.content)
-            setTotal(res.data.totalElements)
+            setTotal(res.data.page.totalElements)
         } finally {
             setLoading(false)
         }

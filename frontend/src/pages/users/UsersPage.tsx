@@ -24,7 +24,7 @@ const UsersPage = () => {
         try {
             const res = await getUsers({ page, size: 10 })
             setUsers(res.data.content)
-            setTotal(res.data.totalElements)
+            setTotal(res.data.page.totalElements)
         } finally {
             setLoading(false)
         }

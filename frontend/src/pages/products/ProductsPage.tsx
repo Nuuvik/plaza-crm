@@ -38,11 +38,11 @@ const ProductsPage = () => {
             if (tab === 'active') {
                 const res = await getProducts({ name: search || undefined, page, size: 10 })
                 setProducts(res.data.content)
-                setTotal(res.data.totalElements)
+                setTotal(res.data.page.totalElements)
             } else {
                 const res = await getArchivedProducts({ name: search || undefined, page, size: 10 })
                 setProducts(res.data.content)
-                setTotal(res.data.totalElements)
+                setTotal(res.data.page.totalElements)
             }
         } finally {
             setLoading(false)

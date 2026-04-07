@@ -29,7 +29,7 @@ const CustomersPage = () => {
         try {
             const res = await getCustomers({name: search || undefined, page, size: 10})
             setCustomers(res.data.content)
-            setTotal(res.data.totalElements)
+            setTotal(res.data.page.totalElements)
         } finally {
             setLoading(false)
         }

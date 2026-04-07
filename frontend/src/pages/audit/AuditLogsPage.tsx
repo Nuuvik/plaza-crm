@@ -70,7 +70,7 @@ const AuditLogsPage = () => {
                 size: 20,
             })
             setLogs(res.data.content)
-            setTotal(res.data.totalElements)
+            setTotal(res.data.page.totalElements)
         } finally {
             setLoading(false)
         }

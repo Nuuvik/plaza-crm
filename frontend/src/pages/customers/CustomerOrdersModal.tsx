@@ -22,7 +22,7 @@ const CustomerOrdersModal = ({ customerId, customerName, onClose }: Props) => {
         try {
             const res = await getOrdersByCustomer(customerId, { page, size: 10 })
             setOrders(res.data.content)
-            setTotal(res.data.totalElements)
+            setTotal(res.data.page.totalElements)
         } finally {
             setLoading(false)
         }
