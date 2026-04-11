@@ -63,7 +63,7 @@ public class AuthService {
             throw new BadRequestException("Invalid password");
         }
 
-        auditService.log("USER", user.getId(), "LOGIN");
+        auditService.log("USER", user.getId(), "LOGIN", user.getUsername());
 
         return jwtService.generateToken(user);
     }
