@@ -17,6 +17,7 @@ public class OrderMapper {
                 order.getTotalAmount(),
                 order.getCreatedAt(),
                 order.getNotes(),
+                order.isPaid(),
                 order.getSource(),
                 order.getPaymentDate(),
                 order.getPaymentMethod(),
@@ -32,8 +33,8 @@ public class OrderMapper {
                 order.getStatus(),
                 order.getTotalAmount(),
                 order.getCreatedAt(),
-                order.getNotes()
+                order.getNotes(),
+                order.isPaid()
         );
     }
 }
-

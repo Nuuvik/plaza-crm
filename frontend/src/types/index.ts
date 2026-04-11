@@ -42,20 +42,22 @@ export interface OrderListItem {
     id: number
     customerId: number
     customerName: string
-    status: 'NEW' | 'CONFIRMED' | 'PAID' | 'SHIPPED' | 'CANCELLED'
+    status: 'NEW' | 'CONFIRMED' | 'SHIPPED' | 'COMPLETED' | 'CANCELLED'
     totalPrice: number
     createdAt: string
     notes: string
+    paid: boolean
 }
 
 export interface Order {
     id: number
     customerId: number
     customerName: string
-    status: 'NEW' | 'CONFIRMED' | 'PAID' | 'SHIPPED' | 'CANCELLED'
+    status: 'NEW' | 'CONFIRMED' | 'SHIPPED' | 'COMPLETED' | 'CANCELLED'
     totalPrice: number
     createdAt: string
     notes: string
+    paid: boolean
     items: OrderItem[]
 }
 

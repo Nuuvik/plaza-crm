@@ -23,11 +23,14 @@ export const confirmOrder = (id: number) =>
 export const cancelOrder = (id: number) =>
     api.patch<Order>(`/orders/${id}/cancel`)
 
-export const payOrder = (id: number) =>
-    api.patch<Order>(`/orders/${id}/pay`)
-
 export const shipOrder = (id: number) =>
     api.patch<Order>(`/orders/${id}/ship`)
+
+export const completeOrder = (id: number) =>
+    api.patch<Order>(`/orders/${id}/complete`)
+
+export const updatePayment = (id: number, paid: boolean) =>
+    api.patch<Order>(`/orders/${id}/payment`, { paid })
 
 export const updateNotes = (id: number, notes: string) =>
     api.patch<Order>(`/orders/${id}/notes`, { notes })

@@ -29,6 +29,9 @@ const ACTION_COLORS: Record<string, string> = {
     ADD: 'success',
     UPDATE_NOTES: 'processing',
     SYSTEM_INIT: 'default',
+    COMPLETE: 'success',
+    MARK_PAID: 'gold',
+    MARK_UNPAID: 'error',
 }
 
 const ENTITY_TYPE_OPTIONS = [

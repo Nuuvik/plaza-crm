@@ -1,18 +1,6 @@
 package ru.plaza.plaza_crm.orders;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.persistence.Version;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import ru.plaza.plaza_crm.customers.Customer;
@@ -33,7 +21,6 @@ public class Order extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    //Optimistic locking
     @Version
     private Long version;
 
@@ -41,7 +28,6 @@ public class Order extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     private Customer customer;
 
-    //нет @Setter чтобы случайно не было доступа к изменению поля
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
@@ -55,9 +41,6 @@ public class Order extends BaseEntity {
     @Column(length = 1000)
     private String notes;
 
-    /**
-     * источник, откуда поступил заказ
-     */
     @Setter
     private String source;
 
@@ -67,10 +50,13 @@ public class Order extends BaseEntity {
     @Setter
     private String paymentMethod;
 
+    @Setter
+    private boolean isPaid = false;
+
     public void initAsNew(Customer customer) {
         this.customer = customer;
         this.status = OrderStatus.NEW;
-        this.source = "CRM"; //TODO change
+        this.source = "CRM";
     }
 
     public void confirm() {
@@ -80,62 +66,48 @@ public class Order extends BaseEntity {
         this.status = OrderStatus.CONFIRMED;
     }
 
-    public void markAsPaid() {
-        if (status != OrderStatus.CONFIRMED) {
-            throw new BadRequestException("Order must be confirmed before payment");
-        }
-        this.status = OrderStatus.PAID;
-    }
-
     public void ship() {
-        if (status != OrderStatus.PAID) {
-            throw new BadRequestException("Order must be paid before shipping");
+        if (status != OrderStatus.CONFIRMED) {
+            throw new BadRequestException("Order must be confirmed before shipping");
         }
         this.status = OrderStatus.SHIPPED;
     }
 
-    public void cancel() {
+    public void complete() {
+        if (status != OrderStatus.SHIPPED) {
+            throw new BadRequestException("Order must be shipped before completing");
+        }
+        this.status = OrderStatus.COMPLETED;
+    }
 
+    public void cancel() {
         if (status == OrderStatus.CANCELLED) {
             throw new BadRequestException("Order already cancelled");
         }
-
-        if (status == OrderStatus.SHIPPED) {
-            throw new BadRequestException("Shipped orders cannot be cancelled");
+        if (status == OrderStatus.SHIPPED || status == OrderStatus.COMPLETED) {
+            throw new BadRequestException("Cannot cancel a shipped or completed order");
         }
-
-        // Возвращаем stock
         for (OrderItem item : items) {
             if (!Boolean.TRUE.equals(item.getDeleted())) {
                 item.getProduct().increaseStock(item.getQuantity());
             }
         }
-
         this.status = OrderStatus.CANCELLED;
     }
 
     public void recalculateTotal() {
         totalAmount = items.stream()
                 .filter(i -> !Boolean.TRUE.equals(i.getDeleted()))
-                .map(i -> i.getUnitPrice()
-                        .multiply(BigDecimal.valueOf(i.getQuantity())))
+                .map(i -> i.getUnitPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     public void removeItem(Long productId) {
-
         ensureEditable();
-
         OrderItem item = findActiveItemByProduct(productId);
-
-        if (item == null) {
-            throw new BadRequestException("Item not found in order");
-        }
-
+        if (item == null) throw new BadRequestException("Item not found in order");
         item.setDeleted(true);
-
         item.getProduct().increaseStock(item.getQuantity());
-
         recalculateTotal();
     }
 
@@ -154,50 +126,30 @@ public class Order extends BaseEntity {
     }
 
     public void addOrIncreaseItem(Product product, int quantity) {
-
         ensureEditable();
-
         OrderItem existing = findActiveItemByProduct(product.getId());
-
         if (existing != null) {
             updateItemQuantity(product.getId(), existing.getQuantity() + quantity);
             return;
         }
-
         product.decreaseStock(quantity);
-
         OrderItem item = new OrderItem();
         item.setProduct(product);
         item.setQuantity(quantity);
         item.setUnitPrice(product.getPrice());
-
         items.add(item);
         item.setOrder(this);
-
         recalculateTotal();
     }
 
     public void updateItemQuantity(Long productId, int newQuantity) {
-
         ensureEditable();
-
         OrderItem item = findActiveItemByProduct(productId);
-
-        if (item == null) {
-            throw new BadRequestException("Item not found in order");
-        }
-
-        int oldQty = item.getQuantity();
-        int diff = newQuantity - oldQty;
-
-        if (diff > 0) {
-            item.getProduct().decreaseStock(diff);
-        } else if (diff < 0) {
-            item.getProduct().increaseStock(Math.abs(diff));
-        }
-
+        if (item == null) throw new BadRequestException("Item not found in order");
+        int diff = newQuantity - item.getQuantity();
+        if (diff > 0) item.getProduct().decreaseStock(diff);
+        else if (diff < 0) item.getProduct().increaseStock(Math.abs(diff));
         item.setQuantity(newQuantity);
-
         recalculateTotal();
     }
 }

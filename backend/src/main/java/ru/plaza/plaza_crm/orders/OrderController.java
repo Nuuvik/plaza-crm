@@ -6,17 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
@@ -67,14 +57,19 @@ public class OrderController {
         return orderService.cancelOrder(id);
     }
 
-    @PatchMapping("/{id}/pay")
-    public OrderResponse payOrder(@PathVariable Long id) {
-        return orderService.payOrder(id);
-    }
-
     @PatchMapping("/{id}/ship")
     public OrderResponse shipOrder(@PathVariable Long id) {
         return orderService.shipOrder(id);
+    }
+
+    @PatchMapping("/{id}/complete")
+    public OrderResponse completeOrder(@PathVariable Long id) {
+        return orderService.completeOrder(id);
+    }
+
+    @PatchMapping("/{id}/payment")
+    public OrderResponse updatePayment(@PathVariable Long id, @RequestBody UpdatePaymentRequest request) {
+        return orderService.updatePayment(id, request.isPaid());
     }
 
     @PatchMapping("/{id}/notes")

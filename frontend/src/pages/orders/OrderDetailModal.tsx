@@ -1,11 +1,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Modal, Descriptions, Tag, Table, Button, Space, Input, message, Popconfirm, InputNumber, Select } from 'antd'
+import {
+    Modal, Descriptions, Tag, Table, Button, Space,
+    Input, message, Popconfirm, InputNumber, Select, Switch, Divider
+} from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
-import { getOrderById, confirmOrder, cancelOrder, payOrder, shipOrder, updateNotes, updateItem, removeItem, addItem } from '../../api/orders'
+import {
+    getOrderById, confirmOrder, cancelOrder, shipOrder,
+    completeOrder, updatePayment, updateNotes, updateItem, removeItem, addItem
+} from '../../api/orders'
 import { getProducts } from '../../api/products'
 import type { Order, OrderItem, Product } from '../../types'
 import axios from 'axios'
-import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from '../../constants/orderStatus'
+import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS, STATUS_TRANSITIONS } from '../../constants/orderStatus'
 
 interface Props {
     orderId: number
@@ -16,9 +22,8 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
     const [order, setOrder] = useState<Order | null>(null)
     const [notes, setNotes] = useState('')
     const [loading, setLoading] = useState(false)
-    const [messageApi, contextHolder] = message.useMessage()
     const [actionLoading, setActionLoading] = useState(false)
-
+    const [messageApi, contextHolder] = message.useMessage()
     const notesInitialized = useRef(false)
 
     const [products, setProducts] = useState<Product[]>([])
@@ -49,7 +54,6 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
         loadProducts()
     }, [load, loadProducts])
 
-    // Обновляем позицию локально без перезагрузки
     const updateLocalItem = (productId: number, newQuantity: number) => {
         setOrder(prev => {
             if (!prev) return prev
@@ -58,22 +62,18 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                     ? { ...i, quantity: newQuantity, totalPrice: i.unitPrice * newQuantity }
                     : i
             )
-            const newTotal = updatedItems.reduce((sum, i) => sum + i.totalPrice, 0)
-            return { ...prev, items: updatedItems, totalPrice: newTotal }
+            return { ...prev, items: updatedItems, totalPrice: updatedItems.reduce((s, i) => s + i.totalPrice, 0) }
         })
     }
 
-    // Удаляем позицию локально без перезагрузки
     const removeLocalItem = (productId: number) => {
         setOrder(prev => {
             if (!prev) return prev
             const updatedItems = prev.items.filter(i => i.productId !== productId)
-            const newTotal = updatedItems.reduce((sum, i) => sum + i.totalPrice, 0)
-            return { ...prev, items: updatedItems, totalPrice: newTotal }
+            return { ...prev, items: updatedItems, totalPrice: updatedItems.reduce((s, i) => s + i.totalPrice, 0) }
         })
     }
 
-    // Добавляем позицию локально без перезагрузки
     const addLocalItem = (product: Product, quantity: number) => {
         setOrder(prev => {
             if (!prev) return prev
@@ -92,39 +92,73 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                     productName: product.name,
                     quantity,
                     unitPrice: product.price,
-                    totalPrice: product.price * quantity
+                    totalPrice: product.price * quantity,
                 }
                 updatedItems = [...prev.items, newItem]
             }
-            const newTotal = updatedItems.reduce((sum, i) => sum + i.totalPrice, 0)
-            return { ...prev, items: updatedItems, totalPrice: newTotal }
+            return { ...prev, items: updatedItems, totalPrice: updatedItems.reduce((s, i) => s + i.totalPrice, 0) }
         })
     }
 
     const updateLocalStock = (productId: number, delta: number) => {
         setProducts(prev => prev.map(p =>
-            p.id === productId
-                ? { ...p, stockQuantity: p.stockQuantity + delta }
-                : p
+            p.id === productId ? { ...p, stockQuantity: p.stockQuantity + delta } : p
         ))
     }
 
-    // load() только для смены статуса
-    const handleAction = async (action: () => Promise<unknown>) => {
+    // --- Смена статуса ---
+    const executeStatusChange = async (newStatus: string) => {
         setActionLoading(true)
         try {
-            await action()
+            switch (newStatus) {
+                case 'CONFIRMED': await confirmOrder(orderId); break
+                case 'SHIPPED':   await shipOrder(orderId); break
+                case 'COMPLETED': await completeOrder(orderId); break
+                case 'CANCELLED': await cancelOrder(orderId); break
+            }
             await load()
             messageApi.success('Статус обновлён')
         } catch (e: unknown) {
-            if (axios.isAxiosError(e) && e.response?.status !== 500 && e.response?.status !== 403) {
-                messageApi.error(e.response?.data?.message || 'Ошибка')
+            if (axios.isAxiosError(e) && e.response?.data?.message) {
+                messageApi.error(e.response.data.message)
             }
         } finally {
             setActionLoading(false)
         }
     }
 
+    const handleStatusChange = (newStatus: string) => {
+        if (newStatus === 'CANCELLED') {
+            Modal.confirm({
+                title: 'Отменить заказ?',
+                content: 'Товары вернутся на склад. Это действие нельзя отменить.',
+                okText: 'Да, отменить',
+                okButtonProps: { danger: true },
+                cancelText: 'Нет',
+                onOk: () => executeStatusChange('CANCELLED'),
+            })
+            return
+        }
+        executeStatusChange(newStatus)
+    }
+
+    // --- Оплата ---
+    const handlePaymentToggle = async (checked: boolean) => {
+        setActionLoading(true)
+        try {
+            const res = await updatePayment(orderId, checked)
+            setOrder(res.data)
+            messageApi.success(checked ? 'Отмечено как оплаченный' : 'Отметка об оплате снята')
+        } catch (e: unknown) {
+            if (axios.isAxiosError(e) && e.response?.data?.message) {
+                messageApi.error(e.response.data.message)
+            }
+        } finally {
+            setActionLoading(false)
+        }
+    }
+
+    // --- Примечание ---
     const handleSaveNotes = async () => {
         setActionLoading(true)
         try {
@@ -139,16 +173,16 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
         }
     }
 
+    // --- Позиции ---
     const handleUpdateQuantity = async (productId: number, newQuantity: number, oldQuantity: number) => {
         setActionLoading(true)
         try {
             await updateItem(orderId, productId, newQuantity)
             updateLocalItem(productId, newQuantity)
             updateLocalStock(productId, oldQuantity - newQuantity)
-            messageApi.success('Количество обновлено')
         } catch (e: unknown) {
-            if (axios.isAxiosError(e) && e.response?.status !== 500 && e.response?.status !== 403) {
-                messageApi.error(e.response?.data?.message || 'Ошибка')
+            if (axios.isAxiosError(e) && e.response?.data?.message) {
+                messageApi.error(e.response.data.message)
             }
         } finally {
             setActionLoading(false)
@@ -161,10 +195,9 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
             await removeItem(orderId, productId)
             removeLocalItem(productId)
             updateLocalStock(productId, quantity)
-            messageApi.success('Позиция удалена')
         } catch (e: unknown) {
-            if (axios.isAxiosError(e) && e.response?.status !== 500 && e.response?.status !== 403) {
-                messageApi.error(e.response?.data?.message || 'Ошибка')
+            if (axios.isAxiosError(e) && e.response?.data?.message) {
+                messageApi.error(e.response.data.message)
             }
         } finally {
             setActionLoading(false)
@@ -184,8 +217,8 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
             setAddQuantity(1)
             messageApi.success('Товар добавлен')
         } catch (e: unknown) {
-            if (axios.isAxiosError(e) && e.response?.status !== 500 && e.response?.status !== 403) {
-                messageApi.error(e.response?.data?.message || 'Ошибка')
+            if (axios.isAxiosError(e) && e.response?.data?.message) {
+                messageApi.error(e.response.data.message)
             }
         } finally {
             setActionLoading(false)
@@ -193,6 +226,7 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
     }
 
     const isEditable = order?.status === 'NEW'
+    const availableTransitions = order ? STATUS_TRANSITIONS[order.status] ?? [] : []
 
     const itemColumns = [
         { title: 'Артикул', dataIndex: 'sku', key: 'sku' },
@@ -225,8 +259,7 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                 <Popconfirm
                     title="Удалить позицию?"
                     onConfirm={() => handleRemoveItem(record.productId, record.quantity)}
-                    okText="Да"
-                    cancelText="Нет"
+                    okText="Да" cancelText="Нет"
                     disabled={actionLoading}
                 >
                     <Button size="small" danger disabled={actionLoading}>✕</Button>
@@ -241,16 +274,13 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
             open={true}
             onCancel={onClose}
             footer={null}
-            width={700}
+            width={720}
             loading={loading}
         >
             {contextHolder}
             {order && (
                 <>
                     <Descriptions bordered size="small" style={{ marginBottom: 16 }}>
-                        <Descriptions.Item label="Статус">
-                            <Tag color={ORDER_STATUS_COLORS[order.status]}>{ORDER_STATUS_LABELS[order.status]}</Tag>
-                        </Descriptions.Item>
                         <Descriptions.Item label="Клиент">{order.customerName}</Descriptions.Item>
                         <Descriptions.Item label="Сумма">{order.totalPrice} ₽</Descriptions.Item>
                         <Descriptions.Item label="Дата">
@@ -258,6 +288,55 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                         </Descriptions.Item>
                     </Descriptions>
 
+                    {/* Статус и оплата */}
+                    <div style={{ display: 'flex', gap: 32, alignItems: 'center', marginBottom: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontWeight: 500, color: '#888' }}>Статус:</span>
+                            <Select
+                                value={order.status}
+                                onChange={handleStatusChange}
+                                disabled={actionLoading || availableTransitions.length === 0}
+                                style={{ minWidth: 160 }}
+                                options={[
+                                    {
+                                        value: order.status,
+                                        label: ORDER_STATUS_LABELS[order.status],
+                                        disabled: true,
+                                    },
+                                    ...availableTransitions.map(s => ({
+                                        value: s,
+                                        label: ORDER_STATUS_LABELS[s],
+                                    })),
+                                ]}
+                                labelRender={({ value }) => {
+                                    const v = value as string
+                                    return (
+                                        <Tag
+                                            color={ORDER_STATUS_COLORS[v]}
+                                            style={{ margin: 0, cursor: availableTransitions.length > 0 ? 'pointer' : 'default' }}
+                                        >
+                                            {ORDER_STATUS_LABELS[v]}
+                                        </Tag>
+                                    )
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontWeight: 500, color: '#888' }}>Оплата:</span>
+                            <Switch
+                                checked={order.paid}
+                                onChange={handlePaymentToggle}
+                                disabled={order.status === 'CANCELLED' || actionLoading}
+                                checkedChildren="Оплачен"
+                                unCheckedChildren="Не оплачен"
+                            />
+                        </div>
+                    </div>
+
+                    <Divider style={{ margin: '12px 0' }} />
+
+                    {/* Позиции */}
                     <Table
                         columns={itemColumns}
                         dataSource={order.items}
@@ -267,6 +346,7 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                         style={{ marginBottom: 16 }}
                     />
 
+                    {/* Добавить товар */}
                     {isEditable && (
                         <div style={{ marginBottom: 16 }}>
                             <div style={{ marginBottom: 8, fontWeight: 500 }}>Добавить товар:</div>
@@ -305,7 +385,8 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                         </div>
                     )}
 
-                    <div style={{ marginBottom: 16 }}>
+                    {/* Примечание */}
+                    <div>
                         <div style={{ marginBottom: 8, fontWeight: 500 }}>Примечание:</div>
                         <Space.Compact style={{ width: '100%' }}>
                             <Input.TextArea
@@ -318,49 +399,6 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                             </Button>
                         </Space.Compact>
                     </div>
-
-                    {order.status !== 'CANCELLED' && order.status !== 'SHIPPED' && (
-                        <Space wrap>
-                            {order.status === 'NEW' && (
-                                <Button
-                                    type="primary"
-                                    loading={actionLoading}
-                                    disabled={actionLoading}
-                                    onClick={() => handleAction(() => confirmOrder(orderId))}
-                                >
-                                    Подтвердить
-                                </Button>
-                            )}
-                            {order.status === 'CONFIRMED' && (
-                                <Button
-                                    type="primary"
-                                    loading={actionLoading}
-                                    disabled={actionLoading}
-                                    onClick={() => handleAction(() => payOrder(orderId))}
-                                >
-                                    Оплачен
-                                </Button>
-                            )}
-                            {order.status === 'PAID' && (
-                                <Button
-                                    type="primary"
-                                    loading={actionLoading}
-                                    disabled={actionLoading}
-                                    onClick={() => handleAction(() => shipOrder(orderId))}
-                                >
-                                    Отправить
-                                </Button>
-                            )}
-                            <Popconfirm
-                                title="Отменить заказ?"
-                                onConfirm={() => handleAction(() => cancelOrder(orderId))}
-                                okText="Да" cancelText="Нет"
-                                disabled={actionLoading}
-                            >
-                                <Button danger disabled={actionLoading}>Отменить</Button>
-                            </Popconfirm>
-                        </Space>
-                    )}
                 </>
             )}
         </Modal>

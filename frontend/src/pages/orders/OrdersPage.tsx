@@ -77,6 +77,15 @@ const OrdersPage = () => {
             render: (v) => <Tag color={ORDER_STATUS_COLORS[v]}>{ORDER_STATUS_LABELS[v]}</Tag>
         },
         {
+            title: 'Оплата',
+            dataIndex: 'paid',
+            key: 'paid',
+            width: 110,
+            render: (v: boolean) => (
+                <Tag color={v ? 'green' : 'red'}>{v ? 'Оплачен' : 'Не оплачен'}</Tag>
+            )
+        },
+        {
             title: 'Сумма', dataIndex: 'totalPrice', key: 'totalPrice',
             render: (v) => `${v} ₽`
         },

@@ -16,4 +16,5 @@ public class OrderListResponse {
     private BigDecimal totalPrice;
     private LocalDateTime createdAt;
     private String notes;
+    private boolean paid;
 }
