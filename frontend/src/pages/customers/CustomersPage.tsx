@@ -101,16 +101,16 @@ const CustomersPage = () => {
             title: 'Действия', key: 'actions',
             render: (_, record) => (
                 <Space>
-                    <Button size="small" onClick={() => setOrdersCustomer(record)}>
+                    <Button size="small" onClick={(e) => { e.stopPropagation(); setOrdersCustomer(record)}}>
                         Заказы
                     </Button>
-                    <Button size="small" onClick={() => handleEdit(record)}>Изменить</Button>
+                    <Button size="small" onClick={(e) => { e.stopPropagation(); handleEdit(record) }}>Изменить</Button>
                     <Popconfirm
                         title="Удалить клиента?"
                         onConfirm={() => handleDelete(record.id)}
                         okText="Да" cancelText="Нет"
                     >
-                        <Button size="small" danger>Удалить</Button>
+                        <Button size="small" danger onClick={(e) => e.stopPropagation()}>Удалить</Button>
                     </Popconfirm>
                 </Space>
             )
@@ -151,6 +151,10 @@ const CustomersPage = () => {
                     pageSize: 10,
                     onChange: handlePageChange
                 }}
+                onRow={(record) => ({
+                    onClick: () => handleEdit(record),
+                    style: { cursor: 'pointer' },
+                })}
             />
             <CustomerModal
                 open={modalOpen}

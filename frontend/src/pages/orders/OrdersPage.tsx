@@ -102,7 +102,7 @@ const OrdersPage = () => {
             title: 'Действия', key: 'actions',
             render: (_, record) => (
                 <Space>
-                    <Button size="small" onClick={() => setDetailOrderId(record.id)}>
+                    <Button size="small" onClick={(e) => { e.stopPropagation(); setDetailOrderId(record.id)}}>
                         Открыть
                     </Button>
                     <Popconfirm
@@ -110,7 +110,7 @@ const OrdersPage = () => {
                         onConfirm={() => handleDelete(record.id)}
                         okText="Да" cancelText="Нет"
                     >
-                        <Button size="small" danger>Удалить</Button>
+                        <Button size="small" danger onClick={(e) => e.stopPropagation()}>Удалить</Button>
                     </Popconfirm>
                 </Space>
             )
@@ -144,6 +144,10 @@ const OrdersPage = () => {
                     pageSize: 10,
                     onChange: handlePageChange
                 }}
+                onRow={(record) => ({
+                    onClick: () => setDetailOrderId(record.id),
+                    style: {cursor: 'pointer'},
+                })}
             />
             <OrderModal
                 open={createModalOpen}

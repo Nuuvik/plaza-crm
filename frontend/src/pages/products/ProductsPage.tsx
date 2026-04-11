@@ -162,8 +162,8 @@ const ProductsPage = () => {
             title: 'Действия', key: 'actions',
             render: (_, record) => (
                 <Space>
-                    <Button size="small" onClick={() => handleEdit(record)}>Изменить</Button>
-                    <Button size="small" danger onClick={() => handleDeleteClick(record.id)}>
+                    <Button size="small" onClick={(e) => { e.stopPropagation(); handleEdit(record) }}>Изменить</Button>
+                    <Button size="small" danger onClick={(e) => { e.stopPropagation(); void handleDeleteClick(record.id)}}>
                         Удалить
                     </Button>
                 </Space>
@@ -182,9 +182,14 @@ const ProductsPage = () => {
         {
             title: 'Действия', key: 'actions',
             render: (_, record) => (
-                <Button size="small" onClick={() => handleUnarchive(record.id)}>
-                    Восстановить
-                </Button>
+                <Space>
+                    <Button size="small" onClick={(e) => { e.stopPropagation(); handleEdit(record) }}>
+                        Изменить
+                    </Button>
+                    <Button size="small" onClick={(e) => { e.stopPropagation(); void handleUnarchive(record.id) }}>
+                        Восстановить
+                    </Button>
+                </Space>
             )
         }
     ]
@@ -233,6 +238,10 @@ const ProductsPage = () => {
                     pageSize: 10,
                     onChange: handlePageChange
                 }}
+                onRow={(record) => ({
+                    onClick: () => handleEdit(record),
+                    style: { cursor: 'pointer' },
+                })}
             />
             <ProductModal
                 open={modalOpen}
