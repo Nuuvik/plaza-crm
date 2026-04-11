@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
     Modal, Descriptions, Tag, Table, Button, Space,
-    Input, message, Popconfirm, InputNumber, Select, Switch, Divider
+    Input, message, Popconfirm, InputNumber, Select,
+    Switch, Divider, DatePicker, Form
 } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { PlusOutlined, SaveOutlined } from '@ant-design/icons'
+import dayjs from 'dayjs'
 import {
     getOrderById, confirmOrder, cancelOrder, shipOrder,
-    completeOrder, updatePayment, updateNotes, updateItem, removeItem, addItem
+    completeOrder, updatePayment, updateNotes, updateDetails,
+    updateItem, removeItem, addItem
 } from '../../api/orders'
 import { getProducts } from '../../api/products'
 import type { Order, OrderItem, Product } from '../../types'
@@ -18,6 +21,21 @@ interface Props {
     onClose: () => void
 }
 
+const SOURCE_OPTIONS = [
+    { value: 'CRM', label: 'CRM' },
+    { value: 'Телефон', label: 'Телефон' },
+    { value: 'Сайт', label: 'Сайт' },
+    { value: 'Мессенджер', label: 'Мессенджер' },
+    { value: 'Лично', label: 'Лично' },
+]
+
+const PAYMENT_METHOD_OPTIONS = [
+    { value: 'Наличные', label: 'Наличные' },
+    { value: 'Карта', label: 'Карта' },
+    { value: 'Перевод', label: 'Перевод' },
+    { value: 'Онлайн', label: 'Онлайн' },
+]
+
 const OrderDetailModal = ({ orderId, onClose }: Props) => {
     const [order, setOrder] = useState<Order | null>(null)
     const [notes, setNotes] = useState('')
@@ -25,6 +43,12 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
     const [actionLoading, setActionLoading] = useState(false)
     const [messageApi, contextHolder] = message.useMessage()
     const notesInitialized = useRef(false)
+
+    // details form
+    const [source, setSource] = useState('')
+    const [paymentMethod, setPaymentMethod] = useState<string | null>(null)
+    const [paymentDate, setPaymentDate] = useState<dayjs.Dayjs | null>(null)
+    const detailsInitialized = useRef(false)
 
     const [products, setProducts] = useState<Product[]>([])
     const [selectedProductId, setSelectedProductId] = useState<number | null>(null)
@@ -38,6 +62,12 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
             if (!notesInitialized.current) {
                 setNotes(res.data.notes || '')
                 notesInitialized.current = true
+            }
+            if (!detailsInitialized.current) {
+                setSource(res.data.source || '')
+                setPaymentMethod(res.data.paymentMethod || null)
+                setPaymentDate(res.data.paymentDate ? dayjs(res.data.paymentDate) : null)
+                detailsInitialized.current = true
             }
         } finally {
             setLoading(false)
@@ -87,12 +117,8 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                 )
             } else {
                 const newItem: OrderItem = {
-                    productId: product.id,
-                    sku: product.sku,
-                    productName: product.name,
-                    quantity,
-                    unitPrice: product.price,
-                    totalPrice: product.price * quantity,
+                    productId: product.id, sku: product.sku, productName: product.name,
+                    quantity, unitPrice: product.price, totalPrice: product.price * quantity,
                 }
                 updatedItems = [...prev.items, newItem]
             }
@@ -106,7 +132,6 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
         ))
     }
 
-    // --- Смена статуса ---
     const executeStatusChange = async (newStatus: string) => {
         setActionLoading(true)
         try {
@@ -142,7 +167,6 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
         executeStatusChange(newStatus)
     }
 
-    // --- Оплата ---
     const handlePaymentToggle = async (checked: boolean) => {
         setActionLoading(true)
         try {
@@ -158,7 +182,6 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
         }
     }
 
-    // --- Примечание ---
     const handleSaveNotes = async () => {
         setActionLoading(true)
         try {
@@ -173,7 +196,25 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
         }
     }
 
-    // --- Позиции ---
+    const handleSaveDetails = async () => {
+        setActionLoading(true)
+        try {
+            const res = await updateDetails(orderId, {
+                source: source || undefined,
+                paymentMethod: paymentMethod,
+                paymentDate: paymentDate ? paymentDate.toISOString() : null,
+            })
+            setOrder(res.data)
+            messageApi.success('Детали сохранены')
+        } catch (e: unknown) {
+            if (axios.isAxiosError(e) && e.response?.data?.message) {
+                messageApi.error(e.response.data.message)
+            }
+        } finally {
+            setActionLoading(false)
+        }
+    }
+
     const handleUpdateQuantity = async (productId: number, newQuantity: number, oldQuantity: number) => {
         setActionLoading(true)
         try {
@@ -226,20 +267,17 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
     }
 
     const isEditable = order?.status === 'NEW'
+    const isCancelled = order?.status === 'CANCELLED'
     const availableTransitions = order ? STATUS_TRANSITIONS[order.status] ?? [] : []
 
     const itemColumns = [
         { title: 'Артикул', dataIndex: 'sku', key: 'sku' },
         { title: 'Товар', dataIndex: 'productName', key: 'productName' },
         {
-            title: 'Кол-во',
-            dataIndex: 'quantity',
-            key: 'quantity',
+            title: 'Кол-во', dataIndex: 'quantity', key: 'quantity',
             render: (v: number, record: OrderItem) => isEditable ? (
                 <InputNumber
-                    min={1}
-                    value={v}
-                    disabled={actionLoading}
+                    min={1} value={v} disabled={actionLoading}
                     onChange={(newVal) => {
                         if (newVal && newVal >= 1 && newVal !== v) {
                             handleUpdateQuantity(record.productId, newVal, v)
@@ -252,15 +290,12 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
         { title: 'Цена', dataIndex: 'unitPrice', key: 'unitPrice', render: (v: number) => `${v} ₽` },
         { title: 'Итого', dataIndex: 'totalPrice', key: 'totalPrice', render: (v: number) => `${v} ₽` },
         ...(isEditable ? [{
-            title: '',
-            key: 'remove',
-            width: 40,
+            title: '', key: 'remove', width: 40,
             render: (_: unknown, record: OrderItem) => (
                 <Popconfirm
                     title="Удалить позицию?"
                     onConfirm={() => handleRemoveItem(record.productId, record.quantity)}
-                    okText="Да" cancelText="Нет"
-                    disabled={actionLoading}
+                    okText="Да" cancelText="Нет" disabled={actionLoading}
                 >
                     <Button size="small" danger disabled={actionLoading}>✕</Button>
                 </Popconfirm>
@@ -298,15 +333,8 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                                 disabled={actionLoading || availableTransitions.length === 0}
                                 style={{ minWidth: 160 }}
                                 options={[
-                                    {
-                                        value: order.status,
-                                        label: ORDER_STATUS_LABELS[order.status],
-                                        disabled: true,
-                                    },
-                                    ...availableTransitions.map(s => ({
-                                        value: s,
-                                        label: ORDER_STATUS_LABELS[s],
-                                    })),
+                                    { value: order.status, label: ORDER_STATUS_LABELS[order.status], disabled: true },
+                                    ...availableTransitions.map(s => ({ value: s, label: ORDER_STATUS_LABELS[s] })),
                                 ]}
                                 labelRender={({ value }) => {
                                     const v = value as string
@@ -321,13 +349,12 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                                 }}
                             />
                         </div>
-
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ fontWeight: 500, color: '#888' }}>Оплата:</span>
                             <Switch
                                 checked={order.paid}
                                 onChange={handlePaymentToggle}
-                                disabled={order.status === 'CANCELLED' || actionLoading}
+                                disabled={isCancelled || actionLoading}
                                 checkedChildren="Оплачен"
                                 unCheckedChildren="Не оплачен"
                             />
@@ -367,23 +394,67 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                                     }))}
                                 />
                                 <InputNumber
-                                    min={1}
-                                    value={addQuantity}
+                                    min={1} value={addQuantity}
                                     onChange={(v) => setAddQuantity(v || 1)}
-                                    style={{ width: 80 }}
-                                    disabled={actionLoading}
+                                    style={{ width: 80 }} disabled={actionLoading}
                                 />
                                 <Button
-                                    icon={<PlusOutlined />}
-                                    onClick={handleAddItem}
-                                    disabled={!selectedProductId || actionLoading}
-                                    type="primary"
+                                    icon={<PlusOutlined />} onClick={handleAddItem}
+                                    disabled={!selectedProductId || actionLoading} type="primary"
                                 >
                                     Добавить
                                 </Button>
                             </Space.Compact>
                         </div>
                     )}
+
+                    <Divider style={{ margin: '12px 0' }} />
+
+                    {/* Детали заказа */}
+                    <Form layout="vertical" size="small">
+                        <div style={{ display: 'flex', gap: 12 }}>
+                            <Form.Item label="Источник" style={{ flex: 1, marginBottom: 8 }}>
+                                <Select
+                                    value={source || undefined}
+                                    onChange={setSource}
+                                    placeholder="Откуда заказ"
+                                    disabled={isCancelled || actionLoading}
+                                    options={SOURCE_OPTIONS}
+                                    allowClear
+                                />
+                            </Form.Item>
+                            <Form.Item label="Способ оплаты" style={{ flex: 1, marginBottom: 8 }}>
+                                <Select
+                                    value={paymentMethod || undefined}
+                                    onChange={v => setPaymentMethod(v ?? null)}
+                                    placeholder="Выберите способ"
+                                    disabled={isCancelled || actionLoading}
+                                    options={PAYMENT_METHOD_OPTIONS}
+                                    allowClear
+                                />
+                            </Form.Item>
+                            <Form.Item label="Дата оплаты" style={{ flex: 1, marginBottom: 8 }}>
+                                <DatePicker
+                                    value={paymentDate}
+                                    onChange={v => setPaymentDate(v)}
+                                    format="DD.MM.YYYY"
+                                    style={{ width: '100%' }}
+                                    disabled={isCancelled || actionLoading}
+                                    allowClear
+                                />
+                            </Form.Item>
+                        </div>
+                        <Button
+                            icon={<SaveOutlined />}
+                            onClick={handleSaveDetails}
+                            disabled={isCancelled || actionLoading}
+                            size="small"
+                        >
+                            Сохранить детали
+                        </Button>
+                    </Form>
+
+                    <Divider style={{ margin: '12px 0' }} />
 
                     {/* Примечание */}
                     <div>

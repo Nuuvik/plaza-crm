@@ -91,4 +91,9 @@ public class OrderController {
     public OrderResponse removeItem(@PathVariable Long id, @PathVariable Long productId) {
         return orderService.removeItem(id, productId);
     }
+
+    @PatchMapping("/{id}/details")
+    public OrderResponse updateDetails(@PathVariable Long id, @RequestBody UpdateOrderDetailsRequest request) {
+        return orderService.updateDetails(id, request);
+    }
 }

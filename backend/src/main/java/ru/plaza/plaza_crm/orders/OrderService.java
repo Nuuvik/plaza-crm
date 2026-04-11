@@ -157,6 +157,18 @@ public class OrderService {
     }
 
     @Transactional
+    public OrderResponse updateDetails(Long id, UpdateOrderDetailsRequest request) {
+        log.info("Updating details for orderId={}", id);
+        Order order = findActiveOrder(id);
+        if (request.getSource() != null) order.setSource(request.getSource());
+        if (request.getPaymentMethod() != null) order.setPaymentMethod(request.getPaymentMethod());
+        order.setPaymentDate(request.getPaymentDate());
+        orderRepository.save(order);
+        auditService.log("ORDER", id, "UPDATE_DETAILS");
+        return OrderMapper.toResponse(order);
+    }
+
+    @Transactional
     public OrderResponse addItem(Long orderId, Long productId, int quantity) {
         Order order = findActiveOrder(orderId);
         Product product = productRepository.findByIdAndDeletedFalseAndArchivedFalse(productId)

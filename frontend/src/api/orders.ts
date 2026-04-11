@@ -48,3 +48,9 @@ export const getOrdersByCustomer = (customerId: number, params?: {
     page?: number
     size?: number
 }) => api.get<Page<OrderListItem>>(`/customers/${customerId}/orders`, { params })
+
+export const updateDetails = (id: number, data: {
+    source?: string
+    paymentMethod?: string | null
+    paymentDate?: string | null
+}) => api.patch<Order>(`/orders/${id}/details`, data)

@@ -26,6 +26,7 @@ export interface Product {
     price: number
     car: string
     stockQuantity: number
+    additions: string
     archived: boolean
 }
 
@@ -58,6 +59,9 @@ export interface Order {
     createdAt: string
     notes: string
     paid: boolean
+    source: string
+    paymentDate: string | null
+    paymentMethod: string | null
     items: OrderItem[]
 }
 

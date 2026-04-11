@@ -64,7 +64,10 @@ const ProductModal = ({ open, product, onClose, onSuccess }: Props) => {
                     <InputNumber min={0.01} precision={2} style={{ width: '100%' }} addonAfter="₽" />
                 </Form.Item>
                 <Form.Item label="Автомобиль" name="car">
-                    <Input placeholder="Например: Toyota Camry" />
+                    <Input placeholder="Например: Lada Vesta" />
+                </Form.Item>
+                <Form.Item label="Дополнительно" name="additions">
+                    <Input.TextArea rows={2} placeholder="Доп. информация о товаре" />
                 </Form.Item>
                 <Form.Item label="Остаток" name="stockQuantity" rules={[{ required: true, message: 'Введите остаток' }]}>
                     <InputNumber min={0} style={{ width: '100%' }} addonAfter="шт." />
