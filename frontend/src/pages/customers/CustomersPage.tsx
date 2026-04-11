@@ -9,6 +9,7 @@ import CustomerModal from './CustomerModal'
 import CustomerOrdersModal from './CustomerOrdersModal'
 import {useDebouncedCallback} from 'use-debounce'
 import axios from 'axios'
+import {extractErrorMessage} from "../../api/utils.ts";
 
 const CustomersPage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
@@ -50,7 +51,7 @@ const CustomersPage = () => {
             load()
         } catch (e: unknown) {
             if (axios.isAxiosError(e) && e.response?.status === 400) {
-                messageApi.error(e.response?.data?.message || 'Ошибка')
+                messageApi.error(extractErrorMessage(e))
             }
         }
     }

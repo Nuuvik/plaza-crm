@@ -50,7 +50,7 @@ public class CustomerService {
             throw new BadRequestException("Customer with this phone already exists");
         }
 
-        if (request.getEmail() != null &&
+        if (request.getEmail() != null && !request.getEmail().isBlank() &&
                 customerRepository.existsByEmailAndDeletedFalse(request.getEmail())) {
             log.warn("Email already in use: email={}", request.getEmail());
             throw new BadRequestException("Customer with this email already exists");
@@ -80,7 +80,7 @@ public class CustomerService {
             throw new BadRequestException("Customer with this phone already exists");
         }
 
-        if (request.getEmail() != null &&
+        if (request.getEmail() != null && !request.getEmail().isBlank() &&
                 customerRepository.existsByEmailAndIdNotAndDeletedFalse(request.getEmail(), id)) {
             log.warn("Email already in use: email={}", request.getEmail());
             throw new BadRequestException("Customer with this email already exists");

@@ -9,6 +9,7 @@ import OrderModal from './OrderModal'
 import OrderDetailModal from './OrderDetailModal'
 import axios from 'axios'
 import {ORDER_STATUS_COLORS, ORDER_STATUS_LABELS} from '../../constants/orderStatus'
+import {extractErrorMessage} from "../../api/utils.ts";
 
 
 const OrdersPage = () => {
@@ -45,7 +46,7 @@ const OrdersPage = () => {
             load()
         } catch (e: unknown) {
             if (axios.isAxiosError(e) && e.response?.status === 400) {
-                messageApi.error(e.response?.data?.message || 'Ошибка')
+                messageApi.error(extractErrorMessage(e))
             }
         }
     }

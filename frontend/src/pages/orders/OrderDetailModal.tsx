@@ -15,6 +15,7 @@ import { getProducts } from '../../api/products'
 import type { Order, OrderItem, Product } from '../../types'
 import axios from 'axios'
 import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS, STATUS_TRANSITIONS } from '../../constants/orderStatus'
+import {extractErrorMessage} from "../../api/utils.ts";
 
 interface Props {
     orderId: number
@@ -145,7 +146,7 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
             messageApi.success('Статус обновлён')
         } catch (e: unknown) {
             if (axios.isAxiosError(e) && e.response?.data?.message) {
-                messageApi.error(e.response.data.message)
+                messageApi.error(extractErrorMessage(e))
             }
         } finally {
             setActionLoading(false)
@@ -175,7 +176,7 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
             messageApi.success(checked ? 'Отмечено как оплаченный' : 'Отметка об оплате снята')
         } catch (e: unknown) {
             if (axios.isAxiosError(e) && e.response?.data?.message) {
-                messageApi.error(e.response.data.message)
+                messageApi.error(extractErrorMessage(e))
             }
         } finally {
             setActionLoading(false)
@@ -195,7 +196,7 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
             messageApi.success('Сохранено')
         } catch (e: unknown) {
             if (axios.isAxiosError(e) && e.response?.data?.message) {
-                messageApi.error(e.response.data.message)
+                messageApi.error(extractErrorMessage(e))
             }
         } finally {
             setActionLoading(false)
@@ -210,7 +211,7 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
             updateLocalStock(productId, oldQuantity - newQuantity)
         } catch (e: unknown) {
             if (axios.isAxiosError(e) && e.response?.data?.message) {
-                messageApi.error(e.response.data.message)
+                messageApi.error(extractErrorMessage(e))
             }
         } finally {
             setActionLoading(false)
@@ -225,7 +226,7 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
             updateLocalStock(productId, quantity)
         } catch (e: unknown) {
             if (axios.isAxiosError(e) && e.response?.data?.message) {
-                messageApi.error(e.response.data.message)
+                messageApi.error(extractErrorMessage(e))
             }
         } finally {
             setActionLoading(false)
@@ -246,7 +247,7 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
             messageApi.success('Товар добавлен')
         } catch (e: unknown) {
             if (axios.isAxiosError(e) && e.response?.data?.message) {
-                messageApi.error(e.response.data.message)
+                messageApi.error(extractErrorMessage(e))
             }
         } finally {
             setActionLoading(false)

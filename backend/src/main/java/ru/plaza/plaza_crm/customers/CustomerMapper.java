@@ -5,7 +5,9 @@ public class CustomerMapper {
         Customer c = new Customer();
         c.setName(dto.getName());
         c.setPhone(dto.getPhone());
-        c.setEmail(dto.getEmail());
+        c.setEmail(dto.getEmail() != null && !dto.getEmail().isBlank()
+                ? dto.getEmail()
+                : null);
         c.setTelegram(dto.getTelegram());
         c.setAddress(dto.getAddress());
         return c;

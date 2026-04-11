@@ -3,6 +3,7 @@ import { Modal, Form, Input, InputNumber, message } from 'antd'
 import type { Product } from '../../types'
 import { createProduct, updateProduct } from '../../api/products'
 import axios from "axios";
+import {extractErrorMessage} from "../../api/utils.ts";
 
 interface Props {
     open: boolean
@@ -37,7 +38,7 @@ const ProductModal = ({ open, product, onClose, onSuccess }: Props) => {
             onSuccess()
         } catch (e: unknown) {
             if (axios.isAxiosError(e) && e.response?.status === 400) {
-                messageApi.error(e.response?.data?.message || 'Ошибка')
+                messageApi.error(extractErrorMessage(e))
             }
         }
     }

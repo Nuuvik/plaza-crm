@@ -1,6 +1,7 @@
 import { Modal, Form, Input, Select, message } from 'antd'
 import { registerUser } from '../../api/auth'
 import axios from 'axios'
+import {extractErrorMessage} from "../../api/utils.ts";
 
 interface Props {
     open: boolean
@@ -20,7 +21,7 @@ const UserCreateModal = ({ open, onClose, onSuccess }: Props) => {
             onSuccess()
         } catch (e: unknown) {
             if (axios.isAxiosError(e) && e.response?.status === 400) {
-                messageApi.error(e.response?.data?.message || 'Ошибка')
+                messageApi.error(extractErrorMessage(e))
             }
         }
     }

@@ -16,6 +16,7 @@ public class CustomerRequest {
     private String name;
 
     @Email(message = "Invalid email format")
+    @Size(max = 255)
     private String email;
 
     @NotBlank(message = "Customer phone cannot be empty")
