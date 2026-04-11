@@ -72,11 +72,6 @@ public class OrderController {
         return orderService.updatePayment(id, request.isPaid());
     }
 
-    @PatchMapping("/{id}/notes")
-    public OrderResponse updateNotes(@PathVariable Long id, @Valid @RequestBody UpdateNotesRequest request) {
-        return orderService.updateNotes(id, request);
-    }
-
     @PostMapping("/{id}/items")
     public OrderResponse addItem(@PathVariable Long id, @Valid @RequestBody OrderItemRequest request) {
         return orderService.addItem(id, request.getProductId(), request.getQuantity());
@@ -92,8 +87,8 @@ public class OrderController {
         return orderService.removeItem(id, productId);
     }
 
-    @PatchMapping("/{id}/details")
-    public OrderResponse updateDetails(@PathVariable Long id, @RequestBody UpdateOrderDetailsRequest request) {
-        return orderService.updateDetails(id, request);
+    @PatchMapping("/{id}/info")
+    public OrderResponse updateInfo(@PathVariable Long id, @Valid @RequestBody UpdateOrderInfoRequest request) {
+        return orderService.updateInfo(id, request);
     }
 }

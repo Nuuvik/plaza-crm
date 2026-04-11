@@ -8,7 +8,7 @@ import { PlusOutlined, SaveOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import {
     getOrderById, confirmOrder, cancelOrder, shipOrder,
-    completeOrder, updatePayment, updateNotes, updateDetails,
+    completeOrder, updatePayment, updateInfo,
     updateItem, removeItem, addItem
 } from '../../api/orders'
 import { getProducts } from '../../api/products'
@@ -182,30 +182,17 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
         }
     }
 
-    const handleSaveNotes = async () => {
+    const handleSaveAll = async () => {
         setActionLoading(true)
         try {
-            await updateNotes(orderId, notes)
-            messageApi.success('Примечание сохранено')
-        } catch (e: unknown) {
-            if (axios.isAxiosError(e) && e.response?.status === 400) {
-                messageApi.error(e.response?.data?.message || 'Ошибка')
-            }
-        } finally {
-            setActionLoading(false)
-        }
-    }
-
-    const handleSaveDetails = async () => {
-        setActionLoading(true)
-        try {
-            const res = await updateDetails(orderId, {
+            const res = await updateInfo(orderId, {
+                notes,
                 source: source || undefined,
-                paymentMethod: paymentMethod,
+                paymentMethod,
                 paymentDate: paymentDate ? paymentDate.toISOString() : null,
             })
             setOrder(res.data)
-            messageApi.success('Детали сохранены')
+            messageApi.success('Сохранено')
         } catch (e: unknown) {
             if (axios.isAxiosError(e) && e.response?.data?.message) {
                 messageApi.error(e.response.data.message)
@@ -410,7 +397,7 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
 
                     <Divider style={{ margin: '12px 0' }} />
 
-                    {/* Детали заказа */}
+                    {/* Детали + примечание */}
                     <Form layout="vertical" size="small">
                         <div style={{ display: 'flex', gap: 12 }}>
                             <Form.Item label="Источник" style={{ flex: 1, marginBottom: 8 }}>
@@ -444,32 +431,23 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                                 />
                             </Form.Item>
                         </div>
-                        <Button
-                            icon={<SaveOutlined />}
-                            onClick={handleSaveDetails}
-                            disabled={isCancelled || actionLoading}
-                            size="small"
-                        >
-                            Сохранить детали
-                        </Button>
-                    </Form>
-
-                    <Divider style={{ margin: '12px 0' }} />
-
-                    {/* Примечание */}
-                    <div>
-                        <div style={{ marginBottom: 8, fontWeight: 500 }}>Примечание:</div>
-                        <Space.Compact style={{ width: '100%' }}>
+                        <Form.Item label="Примечание" style={{ marginBottom: 8 }}>
                             <Input.TextArea
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                                 rows={2}
+                                disabled={isCancelled || actionLoading}
                             />
-                            <Button onClick={handleSaveNotes} disabled={actionLoading}>
-                                Сохранить
-                            </Button>
-                        </Space.Compact>
-                    </div>
+                        </Form.Item>
+                        <Button
+                            icon={<SaveOutlined />}
+                            onClick={handleSaveAll}
+                            disabled={isCancelled || actionLoading}
+                            size="small"
+                        >
+                            Сохранить
+                        </Button>
+                    </Form>
                 </>
             )}
         </Modal>

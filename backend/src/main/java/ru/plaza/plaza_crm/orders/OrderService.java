@@ -47,6 +47,11 @@ public class OrderService {
         Order order = new Order();
         order.initAsNew(customer);
 
+        if (request.getSource() != null) order.setSource(request.getSource());
+        if (request.getPaymentMethod() != null) order.setPaymentMethod(request.getPaymentMethod());
+        if (request.getPaymentDate() != null) order.setPaymentDate(request.getPaymentDate());
+        if (request.getNotes() != null) order.setNotes(request.getNotes());
+
         for (OrderItemRequest itemRequest : request.getItems()) {
             Product product = productRepository.findByIdAndDeletedFalseAndArchivedFalse(itemRequest.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
@@ -148,23 +153,15 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderResponse updateNotes(Long id, UpdateNotesRequest request) {
+    public OrderResponse updateInfo(Long id, UpdateOrderInfoRequest request) {
+        log.info("Updating info for orderId={}", id);
         Order order = findActiveOrder(id);
         order.setNotes(request.getNotes());
-        orderRepository.save(order);
-        auditService.log("ORDER", id, "UPDATE_NOTES");
-        return OrderMapper.toResponse(order);
-    }
-
-    @Transactional
-    public OrderResponse updateDetails(Long id, UpdateOrderDetailsRequest request) {
-        log.info("Updating details for orderId={}", id);
-        Order order = findActiveOrder(id);
         if (request.getSource() != null) order.setSource(request.getSource());
         if (request.getPaymentMethod() != null) order.setPaymentMethod(request.getPaymentMethod());
         order.setPaymentDate(request.getPaymentDate());
         orderRepository.save(order);
-        auditService.log("ORDER", id, "UPDATE_DETAILS");
+        auditService.log("ORDER", id, "UPDATE_INFO");
         return OrderMapper.toResponse(order);
     }
 

@@ -11,8 +11,14 @@ export const getOrders = (params?: {
 export const getOrderById = (id: number) =>
     api.get<Order>(`/orders/${id}`)
 
-export const createOrder = (data: { customerId: number; items: { productId: number; quantity: number }[] }) =>
-    api.post<Order>('/orders', data)
+export const createOrder = (data: {
+    customerId: number
+    items: { productId: number; quantity: number }[]
+    source?: string
+    paymentMethod?: string
+    paymentDate?: string
+    notes?: string
+}) => api.post<Order>('/orders', data)
 
 export const deleteOrder = (id: number) =>
     api.delete(`/orders/${id}`)
@@ -32,9 +38,6 @@ export const completeOrder = (id: number) =>
 export const updatePayment = (id: number, paid: boolean) =>
     api.patch<Order>(`/orders/${id}/payment`, { paid })
 
-export const updateNotes = (id: number, notes: string) =>
-    api.patch<Order>(`/orders/${id}/notes`, { notes })
-
 export const addItem = (orderId: number, productId: number, quantity: number) =>
     api.post<Order>(`/orders/${orderId}/items`, { productId, quantity })
 
@@ -49,8 +52,9 @@ export const getOrdersByCustomer = (customerId: number, params?: {
     size?: number
 }) => api.get<Page<OrderListItem>>(`/customers/${customerId}/orders`, { params })
 
-export const updateDetails = (id: number, data: {
+export const updateInfo = (id: number, data: {
+    notes?: string
     source?: string
     paymentMethod?: string | null
     paymentDate?: string | null
-}) => api.patch<Order>(`/orders/${id}/details`, data)
+}) => api.patch<Order>(`/orders/${id}/info`, data)

@@ -4,10 +4,16 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
-public class UpdateNotesRequest {
+public class UpdateOrderInfoRequest {
 
     @Size(max = 1000, message = "Notes cannot exceed 1000 characters")
     private String notes;
+
+    private String source;
+    private String paymentMethod;
+    private LocalDateTime paymentDate;
 }
