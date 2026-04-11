@@ -75,17 +75,35 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
     }
 
     const handleSubmit = async () => {
+        // Автодобавляем товар из поля, если пользователь не нажал "+"
+        let currentItems = items
+        if (selectedProductId) {
+            const existing = currentItems.find(i => i.productId === selectedProductId)
+            if (existing) {
+                currentItems = currentItems.map(i =>
+                    i.productId === selectedProductId
+                        ? { ...i, quantity: i.quantity + quantity }
+                        : i
+                )
+            } else {
+                currentItems = [...currentItems, { productId: selectedProductId, quantity }]
+            }
+            setItems(currentItems)
+            setSelectedProductId(null)
+            setQuantity(1)
+        }
+
         if (!customerId) {
             messageApi.error('Выберите клиента')
             return
         }
-        if (items.length === 0) {
+        if (currentItems.length === 0) {
             messageApi.error('Добавьте хотя бы один товар')
             return
         }
         setSubmitting(true)
         try {
-            await createOrder({ customerId, items })
+            await createOrder({ customerId, items: currentItems })
             messageApi.success('Заказ создан')
             onSuccess()
         } catch (e: unknown) {
