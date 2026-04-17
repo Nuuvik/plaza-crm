@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Button, Input, message, Modal, Space, Table, Tabs, Tag } from 'antd'
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
-import { useSearchParams } from 'react-router-dom'
-import type { ColumnsType } from 'antd/es/table'
-import type { Product } from '../../types'
+import {useCallback, useEffect, useState} from 'react'
+import {Button, Input, message, Modal, Space, Table, Tabs, Tag} from 'antd'
+import {ClearOutlined, PlusOutlined} from '@ant-design/icons'
+import {useSearchParams} from 'react-router-dom'
+import type {ColumnsType} from 'antd/es/table'
+import type {Product} from '../../types'
 import {
     archiveProduct,
     deleteProduct,
@@ -13,7 +13,7 @@ import {
     unarchiveProduct,
 } from '../../api/products'
 import ProductModal from './ProductModal'
-import { useDebouncedCallback } from 'use-debounce'
+import {useDebouncedCallback} from 'use-debounce'
 
 const pluralOrders = (n: number) =>
     n === 1 ? `${n} заказе` : `${n} заказах`
@@ -21,13 +21,17 @@ const pluralOrders = (n: number) =>
 const ProductsPage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const page = parseInt(searchParams.get('page') ?? '1') - 1
-    const search = searchParams.get('name') ?? ''
+    const nameParam = searchParams.get('name') ?? ''
+    const skuParam = searchParams.get('sku') ?? ''
+    const carParam = searchParams.get('car') ?? ''
     const tab = (searchParams.get('tab') ?? 'active') as 'active' | 'archived'
 
     const [products, setProducts] = useState<Product[]>([])
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
-    const [searchInput, setSearchInput] = useState(search)
+    const [nameInput, setNameInput] = useState(nameParam)
+    const [skuInput, setSkuInput] = useState(skuParam)
+    const [carInput, setCarInput] = useState(carParam)
     const [modalOpen, setModalOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
     const [messageApi, contextHolder] = message.useMessage()
@@ -36,32 +40,67 @@ const ProductsPage = () => {
         setLoading(true)
         try {
             if (tab === 'active') {
-                const res = await getProducts({ name: search || undefined, page, size: 10 })
+                const res = await getProducts({
+                    name: nameParam || undefined,
+                    sku: skuParam || undefined,
+                    car: carParam || undefined,
+                    page,
+                    size: 10,
+                })
                 setProducts(res.data.content)
                 setTotal(res.data.page.totalElements)
             } else {
-                const res = await getArchivedProducts({ name: search || undefined, page, size: 10 })
+                const res = await getArchivedProducts({
+                    name: nameParam || undefined,
+                    sku: skuParam || undefined,
+                    car: carParam || undefined,
+                    page,
+                    size: 10,
+                })
                 setProducts(res.data.content)
                 setTotal(res.data.page.totalElements)
             }
         } finally {
             setLoading(false)
         }
-    }, [page, search, tab])
+    }, [page, nameParam, skuParam, carParam, tab])
 
     useEffect(() => {
-        setSearchInput(search)
-    }, [search])
+        setNameInput(nameParam)
+        setSkuInput(skuParam)
+        setCarInput(carParam)
+    }, [nameParam, skuParam, carParam])
 
     useEffect(() => {
         load()
     }, [load])
 
+    const updateParam = (key: string, value: string) => {
+        setSearchParams(prev => {
+            if (value) prev.set(key, value)
+            else prev.delete(key)
+            prev.set('page', '1')
+            return prev
+        })
+    }
+
+    const handleNameChange = useDebouncedCallback((v: string) => updateParam('name', v), 300)
+    const handleSkuChange = useDebouncedCallback((v: string) => updateParam('sku', v), 300)
+    const handleCarChange = useDebouncedCallback((v: string) => updateParam('car', v), 300)
+
+    const handleReset = () => {
+        setNameInput('')
+        setSkuInput('')
+        setCarInput('')
+        setSearchParams({tab, page: '1'})
+    }
+
+    const hasFilters = !!(nameParam || skuParam || carParam)
+
     const handleDeleteClick = async (id: number) => {
         try {
             const res = await getProductOrdersCount(id)
             const count = res.data.count
-
             if (count > 0) {
                 Modal.confirm({
                     title: 'Нельзя удалить товар',
@@ -75,7 +114,7 @@ const ProductsPage = () => {
                     title: 'Удалить товар?',
                     content: 'Товар не используется ни в одном заказе и будет удалён без возможности восстановления.',
                     okText: 'Удалить',
-                    okButtonProps: { danger: true },
+                    okButtonProps: {danger: true},
                     cancelText: 'Отмена',
                     onOk: () => handleDelete(id),
                 })
@@ -132,18 +171,11 @@ const ProductsPage = () => {
         })
     }
 
-    const handleSearch = useDebouncedCallback((val: string) => {
-        setSearchParams(prev => {
-            if (val) prev.set('name', val)
-            else prev.delete('name')
-            prev.set('page', '1')
-            return prev
-        })
-    }, 300)
-
     const handleTabChange = (key: string) => {
-        setSearchParams({ tab: key, page: '1' })
-        setSearchInput('')
+        setNameInput('')
+        setSkuInput('')
+        setCarInput('')
+        setSearchParams({tab: key, page: '1'})
     }
 
     const activeColumns: ColumnsType<Product> = [
@@ -151,9 +183,9 @@ const ProductsPage = () => {
             title: 'Артикул', dataIndex: 'sku', key: 'sku',
             render: (v) => <Tag color="purple">{v}</Tag>
         },
-        { title: 'Название', dataIndex: 'name', key: 'name' },
-        { title: 'Цена', dataIndex: 'price', key: 'price', render: (v) => `${v} ₽` },
-        { title: 'Автомобиль', dataIndex: 'car', key: 'car', render: (v) => v || '—' },
+        {title: 'Название', dataIndex: 'name', key: 'name'},
+        {title: 'Цена', dataIndex: 'price', key: 'price', render: (v) => `${v} ₽`},
+        {title: 'Автомобиль', dataIndex: 'car', key: 'car', render: (v) => v || '—'},
         {
             title: 'Остаток', dataIndex: 'stockQuantity', key: 'stockQuantity',
             render: (v) => <Tag color={v > 0 ? 'green' : 'red'}>{v} шт.</Tag>
@@ -162,8 +194,16 @@ const ProductsPage = () => {
             title: 'Действия', key: 'actions',
             render: (_, record) => (
                 <Space>
-                    <Button size="small" onClick={(e) => { e.stopPropagation(); handleEdit(record) }}>Изменить</Button>
-                    <Button size="small" danger onClick={(e) => { e.stopPropagation(); void handleDeleteClick(record.id)}}>
+                    <Button size="small" onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(record)
+                    }}>
+                        Изменить
+                    </Button>
+                    <Button size="small" danger onClick={(e) => {
+                        e.stopPropagation();
+                        void handleDeleteClick(record.id)
+                    }}>
                         Удалить
                     </Button>
                 </Space>
@@ -176,17 +216,23 @@ const ProductsPage = () => {
             title: 'Артикул', dataIndex: 'sku', key: 'sku',
             render: (v) => <Tag color="default">{v}</Tag>
         },
-        { title: 'Название', dataIndex: 'name', key: 'name' },
-        { title: 'Цена', dataIndex: 'price', key: 'price', render: (v) => `${v} ₽` },
-        { title: 'Автомобиль', dataIndex: 'car', key: 'car', render: (v) => v || '—' },
+        {title: 'Название', dataIndex: 'name', key: 'name'},
+        {title: 'Цена', dataIndex: 'price', key: 'price', render: (v) => `${v} ₽`},
+        {title: 'Автомобиль', dataIndex: 'car', key: 'car', render: (v) => v || '—'},
         {
             title: 'Действия', key: 'actions',
             render: (_, record) => (
                 <Space>
-                    <Button size="small" onClick={(e) => { e.stopPropagation(); handleEdit(record) }}>
+                    <Button size="small" onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(record)
+                    }}>
                         Изменить
                     </Button>
-                    <Button size="small" onClick={(e) => { e.stopPropagation(); void handleUnarchive(record.id) }}>
+                    <Button size="small" onClick={(e) => {
+                        e.stopPropagation();
+                        void handleUnarchive(record.id)
+                    }}>
                         Восстановить
                     </Button>
                 </Space>
@@ -201,30 +247,65 @@ const ProductsPage = () => {
                 activeKey={tab}
                 onChange={handleTabChange}
                 items={[
-                    { key: 'active', label: 'Активные' },
-                    { key: 'archived', label: 'Архив' },
+                    {key: 'active', label: 'Активные'},
+                    {key: 'archived', label: 'Архив'},
                 ]}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap'}}>
                 <Input
-                    placeholder="Поиск по названию"
-                    prefix={<SearchOutlined />}
-                    style={{ width: 300 }}
-                    value={searchInput}
+                    placeholder="Название"
+                    style={{width: 200}}
+                    value={nameInput}
                     onChange={(e) => {
-                        setSearchInput(e.target.value)
-                        handleSearch(e.target.value)
+                        setNameInput(e.target.value);
+                        handleNameChange(e.target.value)
                     }}
                     allowClear
                     onClear={() => {
-                        setSearchInput('')
-                        handleSearch('')
+                        setNameInput('');
+                        handleNameChange('')
                     }}
                 />
-                {tab === 'active' && (
-                    <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-                        Новый товар
+                <Input
+                    placeholder="Артикул"
+                    style={{width: 160}}
+                    value={skuInput}
+                    onChange={(e) => {
+                        setSkuInput(e.target.value);
+                        handleSkuChange(e.target.value)
+                    }}
+                    allowClear
+                    onClear={() => {
+                        setSkuInput('');
+                        handleSkuChange('')
+                    }}
+                />
+                <Input
+                    placeholder="Автомобиль"
+                    style={{width: 180}}
+                    value={carInput}
+                    onChange={(e) => {
+                        setCarInput(e.target.value);
+                        handleCarChange(e.target.value)
+                    }}
+                    allowClear
+                    onClear={() => {
+                        setCarInput('');
+                        handleCarChange('')
+                    }}
+                />
+
+                {hasFilters && (
+                    <Button icon={<ClearOutlined/>} onClick={handleReset}>
+                        Сбросить
                     </Button>
+                )}
+                {tab === 'active' && (
+                    <div style={{marginLeft: 'auto'}}>
+                        <Button type="primary" icon={<PlusOutlined/>} onClick={handleCreate}>
+                            Новый товар
+                        </Button>
+                    </div>
                 )}
             </div>
             <Table
@@ -240,7 +321,7 @@ const ProductsPage = () => {
                 }}
                 onRow={(record) => ({
                     onClick: () => handleEdit(record),
-                    style: { cursor: 'pointer' },
+                    style: {cursor: 'pointer'},
                 })}
             />
             <ProductModal

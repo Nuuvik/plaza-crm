@@ -153,8 +153,8 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> findAllArchived(String name, String sku, Pageable pageable) {
-        return repository.searchArchived(name, sku, pageable).map(this::mapToResponse);
+    public Page<ProductResponse> findAllArchived(String car, String name, String sku, Pageable pageable) {
+        return repository.searchArchived(car, name, sku, pageable).map(this::mapToResponse);
     }
 
     @Transactional(readOnly = true)

@@ -12,6 +12,7 @@ export const getProducts = (params?: {
 export const getArchivedProducts = (params?: {
     name?: string
     sku?: string
+    car?: string
     page?: number
     size?: number
 }) => api.get<Page<Product>>('/products/archived', { params })

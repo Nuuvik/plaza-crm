@@ -1,20 +1,21 @@
-import {useCallback, useEffect, useState} from 'react'
-import {Button, Input, message, Popconfirm, Space, Table, Tag} from 'antd'
-import {PlusOutlined, SearchOutlined} from '@ant-design/icons'
-import {useSearchParams} from 'react-router-dom'
-import type {ColumnsType} from 'antd/es/table'
-import type {Customer} from '../../types'
-import {deleteCustomer, getCustomers} from '../../api/customers'
+import { useCallback, useEffect, useState } from 'react'
+import { Button, Input, message, Popconfirm, Space, Table, Tag } from 'antd'
+import { ClearOutlined, PlusOutlined } from '@ant-design/icons'
+import { useSearchParams } from 'react-router-dom'
+import type { ColumnsType } from 'antd/es/table'
+import type { Customer } from '../../types'
+import { deleteCustomer, getCustomers } from '../../api/customers'
 import CustomerModal from './CustomerModal'
 import CustomerOrdersModal from './CustomerOrdersModal'
-import {useDebouncedCallback} from 'use-debounce'
-import axios from 'axios'
-import {extractErrorMessage} from "../../api/utils.ts";
+import { useDebouncedCallback } from 'use-debounce'
+import { extractErrorMessage } from '../../api/utils'
 
 const CustomersPage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const page = parseInt(searchParams.get('page') ?? '1') - 1
-    const search = searchParams.get('name') ?? ''
+    const nameParam = searchParams.get('name') ?? ''
+    const phoneParam = searchParams.get('phone') ?? ''
+    const emailParam = searchParams.get('email') ?? ''
 
     const [customers, setCustomers] = useState<Customer[]>([])
     const [total, setTotal] = useState(0)
@@ -23,36 +24,67 @@ const CustomersPage = () => {
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
     const [messageApi, contextHolder] = message.useMessage()
     const [ordersCustomer, setOrdersCustomer] = useState<Customer | null>(null)
-    const [searchInput, setSearchInput] = useState(search)
+
+    const [nameInput, setNameInput] = useState(nameParam)
+    const [phoneInput, setPhoneInput] = useState(phoneParam)
+    const [emailInput, setEmailInput] = useState(emailParam)
 
     const load = useCallback(async () => {
         setLoading(true)
         try {
-            const res = await getCustomers({name: search || undefined, page, size: 10})
+            const res = await getCustomers({
+                name: nameParam || undefined,
+                phone: phoneParam || undefined,
+                email: emailParam || undefined,
+                page,
+                size: 10,
+            })
             setCustomers(res.data.content)
             setTotal(res.data.page.totalElements)
         } finally {
             setLoading(false)
         }
-    }, [page, search])
+    }, [page, nameParam, phoneParam, emailParam])
 
     useEffect(() => {
-        setSearchInput(search)
-    }, [search])
+        setNameInput(nameParam)
+        setPhoneInput(phoneParam)
+        setEmailInput(emailParam)
+    }, [nameParam, phoneParam, emailParam])
 
     useEffect(() => {
         load()
     }, [load])
+
+    const updateParam = (key: string, value: string) => {
+        setSearchParams(prev => {
+            if (value) prev.set(key, value)
+            else prev.delete(key)
+            prev.set('page', '1')
+            return prev
+        })
+    }
+
+    const handleNameChange = useDebouncedCallback((v: string) => updateParam('name', v), 300)
+    const handlePhoneChange = useDebouncedCallback((v: string) => updateParam('phone', v), 300)
+    const handleEmailChange = useDebouncedCallback((v: string) => updateParam('email', v), 300)
+
+    const handleReset = () => {
+        setNameInput('')
+        setPhoneInput('')
+        setEmailInput('')
+        setSearchParams({ page: '1' })
+    }
+
+    const hasFilters = !!(nameParam || phoneParam || emailParam)
 
     const handleDelete = async (id: number) => {
         try {
             await deleteCustomer(id)
             messageApi.success('Клиент удалён')
             load()
-        } catch (e: unknown) {
-            if (axios.isAxiosError(e) && e.response?.status === 400) {
-                messageApi.error(extractErrorMessage(e))
-            }
+        } catch (e) {
+            messageApi.error(extractErrorMessage(e))
         }
     }
 
@@ -73,22 +105,10 @@ const CustomersPage = () => {
         })
     }
 
-    const handleSearch = useDebouncedCallback((val: string) => {
-        setSearchParams(prev => {
-            if (val) {
-                prev.set('name', val)
-            } else {
-                prev.delete('name')
-            }
-            prev.set('page', '1')
-            return prev
-        })
-    }, 300)
-
     const columns: ColumnsType<Customer> = [
-        {title: 'Имя', dataIndex: 'name', key: 'name'},
-        {title: 'Телефон', dataIndex: 'phone', key: 'phone'},
-        {title: 'Email', dataIndex: 'email', key: 'email'},
+        { title: 'Имя', dataIndex: 'name', key: 'name' },
+        { title: 'Телефон', dataIndex: 'phone', key: 'phone' },
+        { title: 'Email', dataIndex: 'email', key: 'email', render: (v) => v || '—' },
         {
             title: 'Telegram', dataIndex: 'telegram', key: 'telegram',
             render: (v) => v ? <Tag color="blue">{v}</Tag> : '—'
@@ -101,16 +121,20 @@ const CustomersPage = () => {
             title: 'Действия', key: 'actions',
             render: (_, record) => (
                 <Space>
-                    <Button size="small" onClick={(e) => { e.stopPropagation(); setOrdersCustomer(record)}}>
+                    <Button size="small" onClick={(e) => { e.stopPropagation(); setOrdersCustomer(record) }}>
                         Заказы
                     </Button>
-                    <Button size="small" onClick={(e) => { e.stopPropagation(); handleEdit(record) }}>Изменить</Button>
+                    <Button size="small" onClick={(e) => { e.stopPropagation(); handleEdit(record) }}>
+                        Изменить
+                    </Button>
                     <Popconfirm
                         title="Удалить клиента?"
                         onConfirm={() => handleDelete(record.id)}
                         okText="Да" cancelText="Нет"
                     >
-                        <Button size="small" danger onClick={(e) => e.stopPropagation()}>Удалить</Button>
+                        <Button size="small" danger onClick={(e) => e.stopPropagation()}>
+                            Удалить
+                        </Button>
                     </Popconfirm>
                 </Space>
             )
@@ -120,25 +144,41 @@ const CustomersPage = () => {
     return (
         <div>
             {contextHolder}
-            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 16}}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
                 <Input
-                    placeholder="Поиск по имени"
-                    prefix={<SearchOutlined/>}
-                    style={{width: 300}}
-                    value={searchInput}
-                    onChange={(e) => {
-                        setSearchInput(e.target.value)
-                        handleSearch(e.target.value)
-                    }}
+                    placeholder="Имя"
+                    style={{ width: 200 }}
+                    value={nameInput}
+                    onChange={(e) => { setNameInput(e.target.value); handleNameChange(e.target.value) }}
                     allowClear
-                    onClear={() => {
-                        setSearchInput('')
-                        handleSearch('')
-                    }}
+                    onClear={() => { setNameInput(''); handleNameChange('') }}
                 />
-                <Button type="primary" icon={<PlusOutlined/>} onClick={handleCreate}>
-                    Новый клиент
-                </Button>
+                <Input
+                    placeholder="Телефон"
+                    style={{ width: 180 }}
+                    value={phoneInput}
+                    onChange={(e) => { setPhoneInput(e.target.value); handlePhoneChange(e.target.value) }}
+                    allowClear
+                    onClear={() => { setPhoneInput(''); handlePhoneChange('') }}
+                />
+                <Input
+                    placeholder="Email"
+                    style={{ width: 200 }}
+                    value={emailInput}
+                    onChange={(e) => { setEmailInput(e.target.value); handleEmailChange(e.target.value) }}
+                    allowClear
+                    onClear={() => { setEmailInput(''); handleEmailChange('') }}
+                />
+                {hasFilters && (
+                    <Button icon={<ClearOutlined />} onClick={handleReset}>
+                        Сбросить
+                    </Button>
+                )}
+                <div style={{ marginLeft: 'auto' }}>
+                    <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                        Новый клиент
+                    </Button>
+                </div>
             </div>
             <Table
                 columns={columns}
@@ -160,10 +200,7 @@ const CustomersPage = () => {
                 open={modalOpen}
                 customer={editingCustomer}
                 onClose={() => setModalOpen(false)}
-                onSuccess={() => {
-                    setModalOpen(false);
-                    load()
-                }}
+                onSuccess={() => { setModalOpen(false); load() }}
             />
             {ordersCustomer && (
                 <CustomerOrdersModal

@@ -41,10 +41,11 @@ public class ProductController {
     // Важно: literal path /archived должен быть выше /{id}
     @GetMapping("/archived")
     @PreAuthorize("hasRole('ADMIN')")
-    public Page<ProductResponse> getArchived(@RequestParam(required = false) String name,
+    public Page<ProductResponse> getArchived(@RequestParam(required = false) String car,
+                                             @RequestParam(required = false) String name,
                                              @RequestParam(required = false) String sku,
                                              Pageable pageable) {
-        return service.findAllArchived(name, sku, pageable);
+        return service.findAllArchived(car, name, sku, pageable);
     }
 
     @GetMapping("/{id}")

@@ -4,6 +4,8 @@ import type { Order, OrderListItem, Page } from '../types'
 export const getOrders = (params?: {
     status?: string
     customerId?: number
+    from?: string
+    to?: string
     page?: number
     size?: number
 }) => api.get<Page<OrderListItem>>('/orders', { params })
