@@ -98,12 +98,11 @@ const ProductsPage = () => {
 
     const handleTableChange: TableProps<Product>['onChange'] = (pagination, _filters, sorter) => {
         const s = (Array.isArray(sorter) ? sorter[0] : sorter) as SorterResult<Product>
-        let newField = DEFAULT_SORT_FIELD
-        let newOrder = DEFAULT_SORT_ORDER
-        if (s?.order) {
-            newField = (s.columnKey as string) ?? DEFAULT_SORT_FIELD
-            newOrder = s.order === 'descend' ? 'desc' : 'asc'
-        }
+        const newField = s?.order ? (s.columnKey as string) ?? sortField : sortField
+        const newOrder = s?.order
+            ? s.order === 'descend' ? 'desc' : 'asc'
+            : sortOrder === 'desc' ? 'asc' : 'desc'   // null-клик → тоглим
+
         setSearchParams(prev => {
             prev.set('page', String(pagination.current ?? 1))
             prev.set('sortField', newField)
