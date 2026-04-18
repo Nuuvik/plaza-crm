@@ -188,6 +188,7 @@ const AuditLogsPage = () => {
                         <RangePicker
                             showTime
                             format="DD.MM.YYYY HH:mm"
+                            allowEmpty={[true, true]}
                             value={dateRange}
                             onChange={val =>
                                 setDateRange(val as [dayjs.Dayjs | null, dayjs.Dayjs | null] | null)

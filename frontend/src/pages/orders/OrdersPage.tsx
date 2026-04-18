@@ -165,6 +165,7 @@ const OrdersPage = () => {
                         handleDateChange(values as [dayjs.Dayjs | null, dayjs.Dayjs | null] | null)
                     }
                     format="DD.MM.YYYY"
+                    allowEmpty={[true, true]}
                     placeholder={['Дата от', 'Дата до']}
                 />
                 {hasFilters && (
