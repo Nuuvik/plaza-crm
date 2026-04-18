@@ -20,6 +20,7 @@ public class CustomerMapper {
                 c.getEmail(),
                 c.getPhone(),
                 c.getTelegram(),
-                c.getAddress());
+                c.getAddress(),
+                c.getCreatedAt());
     }
 }

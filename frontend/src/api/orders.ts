@@ -8,6 +8,7 @@ export const getOrders = (params?: {
     to?: string
     page?: number
     size?: number
+    sort?: string
 }) => api.get<Page<OrderListItem>>('/orders', { params })
 
 export const getOrderById = (id: number) =>

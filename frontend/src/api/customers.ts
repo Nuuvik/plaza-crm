@@ -7,15 +7,16 @@ export const getCustomers = (params?: {
     email?: string
     page?: number
     size?: number
+    sort?: string
 }) => api.get<Page<Customer>>('/customers', { params })
 
 export const getCustomerById = (id: number) =>
     api.get<Customer>(`/customers/${id}`)
 
-export const createCustomer = (data: Omit<Customer, 'id'>) =>
+export const createCustomer = (data: Omit<Customer, 'id' | 'createdAt'>) =>
     api.post<Customer>('/customers', data)
 
-export const updateCustomer = (id: number, data: Omit<Customer, 'id'>) =>
+export const updateCustomer = (id: number, data: Omit<Customer, 'id' | 'createdAt'>) =>
     api.put<Customer>(`/customers/${id}`, data)
 
 export const deleteCustomer = (id: number) =>

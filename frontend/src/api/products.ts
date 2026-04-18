@@ -7,6 +7,7 @@ export const getProducts = (params?: {
     car?: string
     page?: number
     size?: number
+    sort?: string
 }) => api.get<Page<Product>>('/products', { params })
 
 export const getArchivedProducts = (params?: {
@@ -15,6 +16,7 @@ export const getArchivedProducts = (params?: {
     car?: string
     page?: number
     size?: number
+    sort?: string
 }) => api.get<Page<Product>>('/products/archived', { params })
 
 export const getProductOrdersCount = (id: number) =>

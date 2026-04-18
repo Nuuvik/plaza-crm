@@ -17,6 +17,7 @@ export interface Customer {
     phone: string
     telegram: string
     address: string
+    createdAt: string
 }
 
 export interface Product {

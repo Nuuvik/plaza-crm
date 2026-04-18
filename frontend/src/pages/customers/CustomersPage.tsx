@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { Button, Input, message, Popconfirm, Space, Table, Tag } from 'antd'
 import { ClearOutlined, PlusOutlined } from '@ant-design/icons'
 import { useSearchParams } from 'react-router-dom'
+import type { TableProps } from 'antd'
+import type { SorterResult } from 'antd/es/table/interface'
 import type { ColumnsType } from 'antd/es/table'
 import type { Customer } from '../../types'
 import { deleteCustomer, getCustomers } from '../../api/customers'
@@ -10,12 +12,17 @@ import CustomerOrdersModal from './CustomerOrdersModal'
 import { useDebouncedCallback } from 'use-debounce'
 import { extractErrorMessage } from '../../api/utils'
 
+const DEFAULT_SORT_FIELD = 'createdAt'
+const DEFAULT_SORT_ORDER = 'desc'
+
 const CustomersPage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const page = parseInt(searchParams.get('page') ?? '1') - 1
     const nameParam = searchParams.get('name') ?? ''
     const phoneParam = searchParams.get('phone') ?? ''
     const emailParam = searchParams.get('email') ?? ''
+    const sortField = searchParams.get('sortField') ?? DEFAULT_SORT_FIELD
+    const sortOrder = searchParams.get('sortOrder') ?? DEFAULT_SORT_ORDER
 
     const [customers, setCustomers] = useState<Customer[]>([])
     const [total, setTotal] = useState(0)
@@ -38,13 +45,14 @@ const CustomersPage = () => {
                 email: emailParam || undefined,
                 page,
                 size: 10,
+                sort: `${sortField},${sortOrder}`,
             })
             setCustomers(res.data.content)
             setTotal(res.data.page.totalElements)
         } finally {
             setLoading(false)
         }
-    }, [page, nameParam, phoneParam, emailParam])
+    }, [page, nameParam, phoneParam, emailParam, sortField, sortOrder])
 
     useEffect(() => {
         setNameInput(nameParam)
@@ -78,6 +86,22 @@ const CustomersPage = () => {
 
     const hasFilters = !!(nameParam || phoneParam || emailParam)
 
+    const handleTableChange: TableProps<Customer>['onChange'] = (pagination, _filters, sorter) => {
+        const s = (Array.isArray(sorter) ? sorter[0] : sorter) as SorterResult<Customer>
+        let newField = DEFAULT_SORT_FIELD
+        let newOrder = DEFAULT_SORT_ORDER
+        if (s?.order) {
+            newField = (s.columnKey as string) ?? DEFAULT_SORT_FIELD
+            newOrder = s.order === 'descend' ? 'desc' : 'asc'
+        }
+        setSearchParams(prev => {
+            prev.set('page', String(pagination.current ?? 1))
+            prev.set('sortField', newField)
+            prev.set('sortOrder', newOrder)
+            return prev
+        })
+    }
+
     const handleDelete = async (id: number) => {
         try {
             await deleteCustomer(id)
@@ -98,27 +122,57 @@ const CustomersPage = () => {
         setModalOpen(true)
     }
 
-    const handlePageChange = (newPage: number) => {
-        setSearchParams(prev => {
-            prev.set('page', String(newPage))
-            return prev
-        })
-    }
+    const getSortOrder = (field: string) =>
+        sortField === field ? (sortOrder === 'desc' ? 'descend' : 'ascend') as 'descend' | 'ascend' : null
 
     const columns: ColumnsType<Customer> = [
-        { title: 'Имя', dataIndex: 'name', key: 'name' },
-        { title: 'Телефон', dataIndex: 'phone', key: 'phone' },
-        { title: 'Email', dataIndex: 'email', key: 'email', render: (v) => v || '—' },
         {
-            title: 'Telegram', dataIndex: 'telegram', key: 'telegram',
-            render: (v) => v ? <Tag color="blue">{v}</Tag> : '—'
+            title: 'Имя',
+            dataIndex: 'name',
+            key: 'name',
+            sorter: true,
+            sortOrder: getSortOrder('name'),
         },
         {
-            title: 'Адрес', dataIndex: 'address', key: 'address',
-            render: (v) => v || '—'
+            title: 'Телефон',
+            dataIndex: 'phone',
+            key: 'phone',
         },
         {
-            title: 'Действия', key: 'actions',
+            title: 'Email',
+            dataIndex: 'email',
+            key: 'email',
+            sorter: true,
+            sortOrder: getSortOrder('email'),
+            render: (v) => v || '—',
+        },
+        {
+            title: 'Telegram',
+            dataIndex: 'telegram',
+            key: 'telegram',
+            sorter: true,
+            sortOrder: getSortOrder('telegram'),
+            render: (v) => v ? <Tag color="blue">{v}</Tag> : '—',
+        },
+        {
+            title: 'Адрес',
+            dataIndex: 'address',
+            key: 'address',
+            sorter: true,
+            sortOrder: getSortOrder('address'),
+            render: (v) => v || '—',
+        },
+        {
+            title: 'Добавлен',
+            dataIndex: 'createdAt',
+            key: 'createdAt',
+            sorter: true,
+            sortOrder: getSortOrder('createdAt'),
+            render: (v: string) => new Date(v).toLocaleDateString('ru-RU'),
+        },
+        {
+            title: 'Действия',
+            key: 'actions',
             render: (_, record) => (
                 <Space>
                     <Button size="small" onClick={(e) => { e.stopPropagation(); setOrdersCustomer(record) }}>
@@ -137,8 +191,8 @@ const CustomersPage = () => {
                         </Button>
                     </Popconfirm>
                 </Space>
-            )
-        }
+            ),
+        },
     ]
 
     return (
@@ -185,11 +239,13 @@ const CustomersPage = () => {
                 dataSource={customers}
                 rowKey="id"
                 loading={loading}
+                onChange={handleTableChange}
+                showSorterTooltip={false}
                 pagination={{
                     total,
                     current: page + 1,
                     pageSize: 10,
-                    onChange: handlePageChange
+                    showTotal: (t) => `Всего: ${t}`,
                 }}
                 onRow={(record) => ({
                     onClick: () => handleEdit(record),

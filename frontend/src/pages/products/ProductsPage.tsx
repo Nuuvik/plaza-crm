@@ -1,9 +1,11 @@
-import {useCallback, useEffect, useState} from 'react'
-import {Button, Input, message, Modal, Space, Table, Tabs, Tag} from 'antd'
-import {ClearOutlined, PlusOutlined} from '@ant-design/icons'
-import {useSearchParams} from 'react-router-dom'
-import type {ColumnsType} from 'antd/es/table'
-import type {Product} from '../../types'
+import { useCallback, useEffect, useState } from 'react'
+import { Button, Input, message, Modal, Space, Table, Tabs, Tag } from 'antd'
+import { ClearOutlined, PlusOutlined } from '@ant-design/icons'
+import { useSearchParams } from 'react-router-dom'
+import type { TableProps } from 'antd'
+import type { SorterResult } from 'antd/es/table/interface'
+import type { ColumnsType } from 'antd/es/table'
+import type { Product } from '../../types'
 import {
     archiveProduct,
     deleteProduct,
@@ -13,7 +15,10 @@ import {
     unarchiveProduct,
 } from '../../api/products'
 import ProductModal from './ProductModal'
-import {useDebouncedCallback} from 'use-debounce'
+import { useDebouncedCallback } from 'use-debounce'
+
+const DEFAULT_SORT_FIELD = 'sku'
+const DEFAULT_SORT_ORDER = 'asc'
 
 const pluralOrders = (n: number) =>
     n === 1 ? `${n} заказе` : `${n} заказах`
@@ -25,6 +30,8 @@ const ProductsPage = () => {
     const skuParam = searchParams.get('sku') ?? ''
     const carParam = searchParams.get('car') ?? ''
     const tab = (searchParams.get('tab') ?? 'active') as 'active' | 'archived'
+    const sortField = searchParams.get('sortField') ?? DEFAULT_SORT_FIELD
+    const sortOrder = searchParams.get('sortOrder') ?? DEFAULT_SORT_ORDER
 
     const [products, setProducts] = useState<Product[]>([])
     const [total, setTotal] = useState(0)
@@ -39,31 +46,23 @@ const ProductsPage = () => {
     const load = useCallback(async () => {
         setLoading(true)
         try {
-            if (tab === 'active') {
-                const res = await getProducts({
-                    name: nameParam || undefined,
-                    sku: skuParam || undefined,
-                    car: carParam || undefined,
-                    page,
-                    size: 10,
-                })
-                setProducts(res.data.content)
-                setTotal(res.data.page.totalElements)
-            } else {
-                const res = await getArchivedProducts({
-                    name: nameParam || undefined,
-                    sku: skuParam || undefined,
-                    car: carParam || undefined,
-                    page,
-                    size: 10,
-                })
-                setProducts(res.data.content)
-                setTotal(res.data.page.totalElements)
+            const params = {
+                name: nameParam || undefined,
+                sku: skuParam || undefined,
+                car: carParam || undefined,
+                page,
+                size: 10,
+                sort: `${sortField},${sortOrder}`,
             }
+            const res = tab === 'active'
+                ? await getProducts(params)
+                : await getArchivedProducts(params)
+            setProducts(res.data.content)
+            setTotal(res.data.page.totalElements)
         } finally {
             setLoading(false)
         }
-    }, [page, nameParam, skuParam, carParam, tab])
+    }, [page, nameParam, skuParam, carParam, tab, sortField, sortOrder])
 
     useEffect(() => {
         setNameInput(nameParam)
@@ -92,10 +91,36 @@ const ProductsPage = () => {
         setNameInput('')
         setSkuInput('')
         setCarInput('')
-        setSearchParams({tab, page: '1'})
+        setSearchParams({ tab, page: '1' })
     }
 
     const hasFilters = !!(nameParam || skuParam || carParam)
+
+    const handleTableChange: TableProps<Product>['onChange'] = (pagination, _filters, sorter) => {
+        const s = (Array.isArray(sorter) ? sorter[0] : sorter) as SorterResult<Product>
+        let newField = DEFAULT_SORT_FIELD
+        let newOrder = DEFAULT_SORT_ORDER
+        if (s?.order) {
+            newField = (s.columnKey as string) ?? DEFAULT_SORT_FIELD
+            newOrder = s.order === 'descend' ? 'desc' : 'asc'
+        }
+        setSearchParams(prev => {
+            prev.set('page', String(pagination.current ?? 1))
+            prev.set('sortField', newField)
+            prev.set('sortOrder', newOrder)
+            return prev
+        })
+    }
+
+    const handleTabChange = (key: string) => {
+        setNameInput('')
+        setSkuInput('')
+        setCarInput('')
+        setSearchParams({ tab: key, page: '1' })
+    }
+
+    const getSortOrder = (field: string) =>
+        sortField === field ? (sortOrder === 'desc' ? 'descend' : 'ascend') as 'descend' | 'ascend' : null
 
     const handleDeleteClick = async (id: number) => {
         try {
@@ -104,7 +129,7 @@ const ProductsPage = () => {
             if (count > 0) {
                 Modal.confirm({
                     title: 'Нельзя удалить товар',
-                    content: `Товар присутствует в ${pluralOrders(count)}. Хотите переместить его в архив? Товар будет скрыт из каталога, но история заказов сохранится.`,
+                    content: `Товар присутствует в ${pluralOrders(count)}. Хотите переместить его в архив?`,
                     okText: 'В архив',
                     cancelText: 'Отмена',
                     onOk: () => handleArchive(id),
@@ -112,9 +137,9 @@ const ProductsPage = () => {
             } else {
                 Modal.confirm({
                     title: 'Удалить товар?',
-                    content: 'Товар не используется ни в одном заказе и будет удалён без возможности восстановления.',
+                    content: 'Товар будет удалён без возможности восстановления.',
                     okText: 'Удалить',
-                    okButtonProps: {danger: true},
+                    okButtonProps: { danger: true },
                     cancelText: 'Отмена',
                     onOk: () => handleDelete(id),
                 })
@@ -159,85 +184,106 @@ const ProductsPage = () => {
         setModalOpen(true)
     }
 
-    const handleCreate = () => {
-        setEditingProduct(null)
-        setModalOpen(true)
-    }
-
-    const handlePageChange = (newPage: number) => {
-        setSearchParams(prev => {
-            prev.set('page', String(newPage))
-            return prev
-        })
-    }
-
-    const handleTabChange = (key: string) => {
-        setNameInput('')
-        setSkuInput('')
-        setCarInput('')
-        setSearchParams({tab: key, page: '1'})
-    }
-
     const activeColumns: ColumnsType<Product> = [
         {
-            title: 'Артикул', dataIndex: 'sku', key: 'sku',
-            render: (v) => <Tag color="purple">{v}</Tag>
-        },
-        {title: 'Название', dataIndex: 'name', key: 'name'},
-        {title: 'Цена', dataIndex: 'price', key: 'price', render: (v) => `${v} ₽`},
-        {title: 'Автомобиль', dataIndex: 'car', key: 'car', render: (v) => v || '—'},
-        {
-            title: 'Остаток', dataIndex: 'stockQuantity', key: 'stockQuantity',
-            render: (v) => <Tag color={v > 0 ? 'green' : 'red'}>{v} шт.</Tag>
+            title: 'Артикул',
+            dataIndex: 'sku',
+            key: 'sku',
+            sorter: true,
+            sortOrder: getSortOrder('sku'),
+            render: (v) => <Tag color="purple">{v}</Tag>,
         },
         {
-            title: 'Действия', key: 'actions',
+            title: 'Название',
+            dataIndex: 'name',
+            key: 'name',
+            sorter: true,
+            sortOrder: getSortOrder('name'),
+        },
+        {
+            title: 'Цена',
+            dataIndex: 'price',
+            key: 'price',
+            sorter: true,
+            sortOrder: getSortOrder('price'),
+            render: (v) => `${v} ₽`,
+        },
+        {
+            title: 'Автомобиль',
+            dataIndex: 'car',
+            key: 'car',
+            sorter: true,
+            sortOrder: getSortOrder('car'),
+            render: (v) => v || '—',
+        },
+        {
+            title: 'Остаток',
+            dataIndex: 'stockQuantity',
+            key: 'stockQuantity',
+            sorter: true,
+            sortOrder: getSortOrder('stockQuantity'),
+            render: (v) => <Tag color={v > 0 ? 'green' : 'red'}>{v} шт.</Tag>,
+        },
+        {
+            title: 'Действия',
+            key: 'actions',
             render: (_, record) => (
                 <Space>
-                    <Button size="small" onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(record)
-                    }}>
+                    <Button size="small" onClick={(e) => { e.stopPropagation(); handleEdit(record) }}>
                         Изменить
                     </Button>
-                    <Button size="small" danger onClick={(e) => {
-                        e.stopPropagation();
-                        void handleDeleteClick(record.id)
-                    }}>
+                    <Button size="small" danger onClick={(e) => { e.stopPropagation(); void handleDeleteClick(record.id) }}>
                         Удалить
                     </Button>
                 </Space>
-            )
-        }
+            ),
+        },
     ]
 
     const archivedColumns: ColumnsType<Product> = [
         {
-            title: 'Артикул', dataIndex: 'sku', key: 'sku',
-            render: (v) => <Tag color="default">{v}</Tag>
+            title: 'Артикул',
+            dataIndex: 'sku',
+            key: 'sku',
+            sorter: true,
+            sortOrder: getSortOrder('sku'),
+            render: (v) => <Tag color="default">{v}</Tag>,
         },
-        {title: 'Название', dataIndex: 'name', key: 'name'},
-        {title: 'Цена', dataIndex: 'price', key: 'price', render: (v) => `${v} ₽`},
-        {title: 'Автомобиль', dataIndex: 'car', key: 'car', render: (v) => v || '—'},
         {
-            title: 'Действия', key: 'actions',
+            title: 'Название',
+            dataIndex: 'name',
+            key: 'name',
+            sorter: true,
+            sortOrder: getSortOrder('name'),
+        },
+        {
+            title: 'Цена',
+            dataIndex: 'price',
+            key: 'price',
+            sorter: true,
+            sortOrder: getSortOrder('price'),
+            render: (v) => `${v} ₽`,
+        },
+        {
+            title: 'Автомобиль',
+            dataIndex: 'car',
+            key: 'car',
+            render: (v) => v || '—',
+        },
+        {
+            title: 'Действия',
+            key: 'actions',
             render: (_, record) => (
                 <Space>
-                    <Button size="small" onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(record)
-                    }}>
+                    <Button size="small" onClick={(e) => { e.stopPropagation(); handleEdit(record) }}>
                         Изменить
                     </Button>
-                    <Button size="small" onClick={(e) => {
-                        e.stopPropagation();
-                        void handleUnarchive(record.id)
-                    }}>
+                    <Button size="small" onClick={(e) => { e.stopPropagation(); void handleUnarchive(record.id) }}>
                         Восстановить
                     </Button>
                 </Space>
-            )
-        }
+            ),
+        },
     ]
 
     return (
@@ -247,62 +293,43 @@ const ProductsPage = () => {
                 activeKey={tab}
                 onChange={handleTabChange}
                 items={[
-                    {key: 'active', label: 'Активные'},
-                    {key: 'archived', label: 'Архив'},
+                    { key: 'active', label: 'Активные' },
+                    { key: 'archived', label: 'Архив' },
                 ]}
             />
-            <div style={{display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap'}}>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
                 <Input
                     placeholder="Название"
-                    style={{width: 200}}
+                    style={{ width: 200 }}
                     value={nameInput}
-                    onChange={(e) => {
-                        setNameInput(e.target.value);
-                        handleNameChange(e.target.value)
-                    }}
+                    onChange={(e) => { setNameInput(e.target.value); handleNameChange(e.target.value) }}
                     allowClear
-                    onClear={() => {
-                        setNameInput('');
-                        handleNameChange('')
-                    }}
+                    onClear={() => { setNameInput(''); handleNameChange('') }}
                 />
                 <Input
                     placeholder="Артикул"
-                    style={{width: 160}}
+                    style={{ width: 160 }}
                     value={skuInput}
-                    onChange={(e) => {
-                        setSkuInput(e.target.value);
-                        handleSkuChange(e.target.value)
-                    }}
+                    onChange={(e) => { setSkuInput(e.target.value); handleSkuChange(e.target.value) }}
                     allowClear
-                    onClear={() => {
-                        setSkuInput('');
-                        handleSkuChange('')
-                    }}
+                    onClear={() => { setSkuInput(''); handleSkuChange('') }}
                 />
                 <Input
                     placeholder="Автомобиль"
-                    style={{width: 180}}
+                    style={{ width: 180 }}
                     value={carInput}
-                    onChange={(e) => {
-                        setCarInput(e.target.value);
-                        handleCarChange(e.target.value)
-                    }}
+                    onChange={(e) => { setCarInput(e.target.value); handleCarChange(e.target.value) }}
                     allowClear
-                    onClear={() => {
-                        setCarInput('');
-                        handleCarChange('')
-                    }}
+                    onClear={() => { setCarInput(''); handleCarChange('') }}
                 />
-
                 {hasFilters && (
-                    <Button icon={<ClearOutlined/>} onClick={handleReset}>
+                    <Button icon={<ClearOutlined />} onClick={handleReset}>
                         Сбросить
                     </Button>
                 )}
                 {tab === 'active' && (
-                    <div style={{marginLeft: 'auto'}}>
-                        <Button type="primary" icon={<PlusOutlined/>} onClick={handleCreate}>
+                    <div style={{ marginLeft: 'auto' }}>
+                        <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingProduct(null); setModalOpen(true) }}>
                             Новый товар
                         </Button>
                     </div>
@@ -313,25 +340,24 @@ const ProductsPage = () => {
                 dataSource={products}
                 rowKey="id"
                 loading={loading}
+                onChange={handleTableChange}
+                showSorterTooltip={false}
                 pagination={{
                     total,
                     current: page + 1,
                     pageSize: 10,
-                    onChange: handlePageChange
+                    showTotal: (t) => `Всего: ${t}`,
                 }}
                 onRow={(record) => ({
                     onClick: () => handleEdit(record),
-                    style: {cursor: 'pointer'},
+                    style: { cursor: 'pointer' },
                 })}
             />
             <ProductModal
                 open={modalOpen}
                 product={editingProduct}
                 onClose={() => setModalOpen(false)}
-                onSuccess={() => {
-                    setModalOpen(false)
-                    load()
-                }}
+                onSuccess={() => { setModalOpen(false); load() }}
             />
         </div>
     )

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Table, Button, Space, Popconfirm, message, Tag, Select, DatePicker } from 'antd'
 import { ClearOutlined, PlusOutlined } from '@ant-design/icons'
 import { useSearchParams } from 'react-router-dom'
+import type { TableProps } from 'antd'
+import type { SorterResult } from 'antd/es/table/interface'
 import type { ColumnsType } from 'antd/es/table'
 import type { OrderListItem } from '../../types'
 import { getOrders, deleteOrder } from '../../api/orders'
@@ -13,12 +15,17 @@ import dayjs from 'dayjs'
 
 const { RangePicker } = DatePicker
 
+const DEFAULT_SORT_FIELD = 'createdAt'
+const DEFAULT_SORT_ORDER = 'desc'
+
 const OrdersPage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
     const page = parseInt(searchParams.get('page') ?? '1') - 1
     const statusParam = searchParams.get('status') ?? undefined
     const fromParam = searchParams.get('from') ?? undefined
     const toParam = searchParams.get('to') ?? undefined
+    const sortField = searchParams.get('sortField') ?? DEFAULT_SORT_FIELD
+    const sortOrder = searchParams.get('sortOrder') ?? DEFAULT_SORT_ORDER
 
     const [orders, setOrders] = useState<OrderListItem[]>([])
     const [total, setTotal] = useState(0)
@@ -42,13 +49,14 @@ const OrdersPage = () => {
                 to: toParam,
                 page,
                 size: 10,
+                sort: `${sortField},${sortOrder}`,
             })
             setOrders(res.data.content)
             setTotal(res.data.page.totalElements)
         } finally {
             setLoading(false)
         }
-    }, [page, statusParam, fromParam, toParam])
+    }, [page, statusParam, fromParam, toParam, sortField, sortOrder])
 
     useEffect(() => {
         load()
@@ -64,9 +72,18 @@ const OrdersPage = () => {
         }
     }
 
-    const handlePageChange = (newPage: number) => {
+    const handleTableChange: TableProps<OrderListItem>['onChange'] = (pagination, _filters, sorter) => {
+        const s = (Array.isArray(sorter) ? sorter[0] : sorter) as SorterResult<OrderListItem>
+        let newField = DEFAULT_SORT_FIELD
+        let newOrder = DEFAULT_SORT_ORDER
+        if (s?.order) {
+            newField = (s.columnKey as string) ?? DEFAULT_SORT_FIELD
+            newOrder = s.order === 'descend' ? 'desc' : 'asc'
+        }
         setSearchParams(prev => {
-            prev.set('page', String(newPage))
+            prev.set('page', String(pagination.current ?? 1))
+            prev.set('sortField', newField)
+            prev.set('sortOrder', newOrder)
             return prev
         })
     }
@@ -101,33 +118,72 @@ const OrdersPage = () => {
 
     const hasFilters = !!(statusParam || fromParam || toParam)
 
+    const getSortOrder = (field: string) =>
+        sortField === field ? (sortOrder === 'desc' ? 'descend' : 'ascend') as 'descend' | 'ascend' : null
+
     const columns: ColumnsType<OrderListItem> = [
-        { title: '№', dataIndex: 'id', key: 'id', width: 60 },
-        { title: 'Клиент', dataIndex: 'customerName', key: 'customerName' },
         {
-            title: 'Статус', dataIndex: 'status', key: 'status',
-            render: (v) => <Tag color={ORDER_STATUS_COLORS[v]}>{ORDER_STATUS_LABELS[v]}</Tag>
+            title: '№',
+            dataIndex: 'id',
+            key: 'id',
+            width: 60,
+            sorter: true,
+            sortOrder: getSortOrder('id'),
         },
         {
-            title: 'Оплата', dataIndex: 'paid', key: 'paid', width: 110,
+            title: 'Клиент',
+            dataIndex: 'customerName',
+            key: 'customer.name',
+            sorter: true,
+            sortOrder: getSortOrder('customer.name'),
+        },
+        {
+            title: 'Статус',
+            dataIndex: 'status',
+            key: 'status',
+            sorter: true,
+            sortOrder: getSortOrder('status'),
+            render: (v) => <Tag color={ORDER_STATUS_COLORS[v]}>{ORDER_STATUS_LABELS[v]}</Tag>,
+        },
+        {
+            title: 'Оплата',
+            dataIndex: 'paid',
+            key: 'isPaid',
+            width: 110,
+            sorter: true,
+            sortOrder: getSortOrder('isPaid'),
             render: (v: boolean) => (
                 <Tag color={v ? 'green' : 'red'}>{v ? 'Оплачен' : 'Не оплачен'}</Tag>
-            )
+            ),
         },
         {
-            title: 'Сумма', dataIndex: 'totalPrice', key: 'totalPrice',
-            render: (v) => `${v} ₽`
+            title: 'Сумма',
+            dataIndex: 'totalPrice',
+            // backend entity field is totalAmount
+            key: 'totalAmount',
+            sorter: true,
+            sortOrder: getSortOrder('totalAmount'),
+            render: (v) => `${v} ₽`,
         },
         {
-            title: 'Дата создания', dataIndex: 'createdAt', key: 'createdAt',
-            render: (v) => new Date(v).toLocaleDateString('ru-RU')
+            title: 'Дата создания',
+            dataIndex: 'createdAt',
+            key: 'createdAt',
+            sorter: true,
+            sortOrder: getSortOrder('createdAt'),
+            render: (v) => new Date(v).toLocaleDateString('ru-RU'),
         },
         {
-            title: 'Примечание', dataIndex: 'notes', key: 'notes',
-            render: (v) => v || '—'
+            title: 'Примечание',
+            dataIndex: 'notes',
+            key: 'notes',
+            sorter: true,
+            sortOrder: getSortOrder('notes'),
+            render: (v) => v || '—',
         },
         {
-            title: 'Действия', key: 'actions',
+            title: 'Действия',
+            key: 'actions',
             render: (_, record) => (
                 <Space>
                     <Button size="small" onClick={(e) => { e.stopPropagation(); setDetailOrderId(record.id) }}>
@@ -143,8 +199,8 @@ const OrdersPage = () => {
                         </Button>
                     </Popconfirm>
                 </Space>
-            )
-        }
+            ),
+        },
     ]
 
     return (
@@ -184,11 +240,13 @@ const OrdersPage = () => {
                 dataSource={orders}
                 rowKey="id"
                 loading={loading}
+                onChange={handleTableChange}
+                showSorterTooltip={false}
                 pagination={{
                     total,
                     current: page + 1,
                     pageSize: 10,
-                    onChange: handlePageChange
+                    showTotal: (t) => `Всего: ${t}`,
                 }}
                 onRow={(record) => ({
                     onClick: () => setDetailOrderId(record.id),
