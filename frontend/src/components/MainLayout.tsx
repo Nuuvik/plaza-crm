@@ -36,7 +36,6 @@ const MainLayout = () => {
         navigate('/login')
     }
 
-    // Определяем открытые подменю на основе текущего пути
     const adminPaths = ['/users', '/audit-logs']
     const defaultOpenKeys = adminPaths.includes(location.pathname) ? ['admin'] : []
 
@@ -52,16 +51,8 @@ const MainLayout = () => {
                     icon: <SettingOutlined />,
                     label: 'Служебные',
                     children: [
-                        {
-                            key: '/users',
-                            icon: <UsergroupAddOutlined />,
-                            label: 'Пользователи',
-                        },
-                        {
-                            key: '/audit-logs',
-                            icon: <AuditOutlined />,
-                            label: 'Логи',
-                        },
+                        { key: '/users', icon: <UsergroupAddOutlined />, label: 'Пользователи' },
+                        { key: '/audit-logs', icon: <AuditOutlined />, label: 'Логи' },
                     ],
                 },
             ]
@@ -78,8 +69,12 @@ const MainLayout = () => {
     ]
 
     return (
-        <Layout style={{ minHeight: '100vh' }}>
-            <Sider theme="dark" width={220}>
+        <Layout style={{ height: '100%' }}>
+            <Sider
+                theme="dark"
+                width={220}
+                style={{ height: '100%', overflow: 'auto', flexShrink: 0 }}
+            >
                 <div
                     style={{
                         height: 64,
@@ -90,6 +85,7 @@ const MainLayout = () => {
                         fontSize: 18,
                         fontWeight: 'bold',
                         borderBottom: '1px solid #303030',
+                        flexShrink: 0,
                     }}
                 >
                     Plaza CRM
@@ -101,12 +97,11 @@ const MainLayout = () => {
                     defaultOpenKeys={defaultOpenKeys}
                     items={menuItems}
                     onClick={({ key }) => {
-                        // Не навигируем при клике на группу
                         if (key !== 'admin') navigate(key)
                     }}
                 />
             </Sider>
-            <Layout>
+            <Layout style={{ height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 <Header
                     style={{
                         background: token.colorBgContainer,
@@ -116,6 +111,7 @@ const MainLayout = () => {
                         paddingInline: 24,
                         gap: 12,
                         borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                        flexShrink: 0,
                     }}
                 >
                     {user && (
@@ -138,7 +134,14 @@ const MainLayout = () => {
                         <Button icon={<LogoutOutlined />}>Выйти</Button>
                     </Popconfirm>
                 </Header>
-                <Content style={{ margin: 24 }}>
+                <Content
+                    style={{
+                        flex: 1,
+                        overflowY: 'auto',
+                        padding: 24,
+                        minHeight: 0,
+                    }}
+                >
                     <Outlet />
                 </Content>
             </Layout>
