@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './store/AuthProvider'
+import { ThemeProvider } from './store/ThemeProvider'
 import { useAuth } from './store/useAuth'
 import { useEffect } from 'react'
 import { setLogoutFn } from './api'
@@ -50,11 +51,13 @@ const AppRoutes = () => {
 
 function App() {
     return (
-        <AuthProvider>
-            <BrowserRouter>
-                <AppRoutes />
-            </BrowserRouter>
-        </AuthProvider>
+        <ThemeProvider>
+            <AuthProvider>
+                <BrowserRouter>
+                    <AppRoutes />
+                </BrowserRouter>
+            </AuthProvider>
+        </ThemeProvider>
     )
 }
 

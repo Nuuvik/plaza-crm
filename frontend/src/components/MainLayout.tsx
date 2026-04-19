@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Layout, Menu, Button, theme, Popconfirm, Avatar, Dropdown, Space } from 'antd'
+import { Layout, Menu, Button, theme, Popconfirm, Avatar, Dropdown, Space, Tooltip } from 'antd'
 import {
     DashboardOutlined,
     TeamOutlined,
@@ -11,10 +11,13 @@ import {
     LockOutlined,
     AuditOutlined,
     SettingOutlined,
+    SunOutlined,
+    MoonOutlined,
 } from '@ant-design/icons'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { removeToken } from '../store/auth'
 import { getMe } from '../api/auth'
+import { useTheme } from '../store/useTheme'
 import type { User } from '../types'
 import ChangePasswordModal from '../pages/users/ChangePasswordModal'
 
@@ -24,6 +27,7 @@ const MainLayout = () => {
     const navigate = useNavigate()
     const location = useLocation()
     const { token } = theme.useToken()
+    const { themeMode, toggleTheme } = useTheme()
     const [user, setUser] = useState<User | null>(null)
     const [changePasswordOpen, setChangePasswordOpen] = useState(false)
 
@@ -114,6 +118,14 @@ const MainLayout = () => {
                         flexShrink: 0,
                     }}
                 >
+                    <Tooltip title={themeMode === 'light' ? 'Тёмная тема' : 'Светлая тема'}>
+                        <Button
+                            type="text"
+                            icon={themeMode === 'light' ? <MoonOutlined /> : <SunOutlined />}
+                            onClick={toggleTheme}
+                        />
+                    </Tooltip>
+
                     {user && (
                         <Dropdown menu={{ items: userDropdownItems }} trigger={['click']}>
                             <Space style={{ cursor: 'pointer' }}>

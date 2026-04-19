@@ -1,48 +1,51 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Table, Select, Input, Button, Space, Tag, DatePicker, Form } from 'antd'
-import { SearchOutlined, ClearOutlined } from '@ant-design/icons'
-import { useSearchParams } from 'react-router-dom'
-import type { ColumnsType } from 'antd/es/table'
-import { getAuditLogs, type AuditLog } from '../../api/audit'
+import {useCallback, useEffect, useState} from 'react'
+import {Button, DatePicker, Form, Input, Select, Space, Table, Tag} from 'antd'
+import {ClearOutlined, SearchOutlined} from '@ant-design/icons'
+import {useSearchParams} from 'react-router-dom'
+import type {ColumnsType} from 'antd/es/table'
+import {type AuditLog, getAuditLogs} from '../../api/audit'
 import dayjs from 'dayjs'
 
 const ENTITY_TYPE_COLORS: Record<string, string> = {
-    USER: 'blue',
-    CUSTOMER: 'green',
-    ORDER: 'orange',
-    ORDERITEM: 'gold',
-    PRODUCT: 'purple',
+    USER: '#6366f1',
+    CUSTOMER: '#06b6d4',
+    ORDER: '#f97316',
+    ORDERITEM: '#eab308',
+    PRODUCT: '#a855f7',
 }
 
 const ACTION_COLORS: Record<string, string> = {
-    CREATE: 'success',
-    UPDATE: 'processing',
-    DELETE: 'error',
-    LOGIN: 'blue',
-    REGISTER: 'cyan',
-    CONFIRM: 'green',
-    CANCEL: 'red',
-    PAY: 'gold',
-    SHIP: 'purple',
-    CHANGE_PASSWORD: 'warning',
-    ADMIN_CHANGE_PASSWORD: 'warning',
-    ADD: 'success',
-    UPDATE_NOTES: 'processing',
-    SYSTEM_INIT: 'default',
-    COMPLETE: 'success',
-    MARK_PAID: 'gold',
-    MARK_UNPAID: 'error',
+    CREATE: '#22c55e',
+    UPDATE: '#3b82f6',
+    DELETE: '#ef4444',
+    LOGIN: '#6366f1',
+    REGISTER: '#06b6d4',
+    CONFIRM: '#84cc16',
+    CANCEL: '#f97316',
+    SHIP: '#a855f7',
+    COMPLETE: '#10b981',
+    MARK_PAID: '#f59e0b',
+    MARK_UNPAID: '#f43f5e',
+    CHANGE_PASSWORD: '#ec4899',
+    ADMIN_CHANGE_PASSWORD: '#d946ef',
+    ADD: '#14b8a6',
+    UPDATE_INFO: '#60a5fa',
+    UPDATE_NOTES: '#818cf8',
+    PAY: '#fbbf24',
+    SYSTEM_INIT: '#94a3b8',
+    ARCHIVE: '#78716c',
+    UNARCHIVE: '#0ea5e9',
 }
 
 const ENTITY_TYPE_OPTIONS = [
-    { value: 'USER', label: 'Пользователи' },
-    { value: 'CUSTOMER', label: 'Клиенты' },
-    { value: 'ORDER', label: 'Заказы' },
-    { value: 'ORDERITEM', label: 'Позиции заказов' },
-    { value: 'PRODUCT', label: 'Товары' },
+    {value: 'USER', label: 'Пользователи'},
+    {value: 'CUSTOMER', label: 'Клиенты'},
+    {value: 'ORDER', label: 'Заказы'},
+    {value: 'ORDERITEM', label: 'Позиции заказов'},
+    {value: 'PRODUCT', label: 'Товары'},
 ]
 
-const { RangePicker } = DatePicker
+const {RangePicker} = DatePicker
 
 const AuditLogsPage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
@@ -52,12 +55,19 @@ const AuditLogsPage = () => {
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
 
-    // Фильтры
     const [entityType, setEntityType] = useState<string | undefined>(
         searchParams.get('entityType') ?? undefined
     )
     const [username, setUsername] = useState(searchParams.get('username') ?? '')
     const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
+
+    // Светлая тема: solid фон, белый текст
+    // Тёмная тема: прозрачный фон, цветной текст и рамка (ghost-стиль)
+    const tagStyle = (color: string): React.CSSProperties => ({
+        backgroundColor: color + '22',
+        color,
+        border: `1px solid ${color}88`,
+    })
 
     const load = useCallback(async () => {
         setLoading(true)
@@ -105,7 +115,7 @@ const AuditLogsPage = () => {
         setEntityType(undefined)
         setUsername('')
         setDateRange(null)
-        setSearchParams({ page: '1' })
+        setSearchParams({page: '1'})
     }
 
     const columns: ColumnsType<AuditLog> = [
@@ -119,9 +129,9 @@ const AuditLogsPage = () => {
             title: 'Сущность',
             dataIndex: 'entityType',
             key: 'entityType',
-            width: 130,
+            width: 140,
             render: (v: string) => (
-                <Tag color={ENTITY_TYPE_COLORS[v] ?? 'default'}>{v}</Tag>
+                <Tag style={tagStyle(ENTITY_TYPE_COLORS[v] ?? '#94a3b8')}>{v}</Tag>
             ),
         },
         {
@@ -134,9 +144,9 @@ const AuditLogsPage = () => {
             title: 'Действие',
             dataIndex: 'action',
             key: 'action',
-            width: 180,
+            width: 200,
             render: (v: string) => (
-                <Tag color={ACTION_COLORS[v] ?? 'default'}>{v}</Tag>
+                <Tag style={tagStyle(ACTION_COLORS[v] ?? '#94a3b8')}>{v}</Tag>
             ),
         },
         {
@@ -163,7 +173,7 @@ const AuditLogsPage = () => {
 
     return (
         <div>
-            <div style={{ marginBottom: 16 }}>
+            <div style={{marginBottom: 16}}>
                 <Form layout="inline" onFinish={handleSearch}>
                     <Form.Item label="Тип сущности">
                         <Select
@@ -171,7 +181,7 @@ const AuditLogsPage = () => {
                             placeholder="Все"
                             value={entityType}
                             onChange={setEntityType}
-                            style={{ width: 180 }}
+                            style={{width: 180}}
                             options={ENTITY_TYPE_OPTIONS}
                         />
                     </Form.Item>
@@ -180,7 +190,7 @@ const AuditLogsPage = () => {
                             placeholder="Логин"
                             value={username}
                             onChange={e => setUsername(e.target.value)}
-                            style={{ width: 160 }}
+                            style={{width: 160}}
                             allowClear
                         />
                     </Form.Item>
@@ -200,12 +210,12 @@ const AuditLogsPage = () => {
                             <Button
                                 type="primary"
                                 htmlType="submit"
-                                icon={<SearchOutlined />}
+                                icon={<SearchOutlined/>}
                                 onClick={handleSearch}
                             >
                                 Найти
                             </Button>
-                            <Button icon={<ClearOutlined />} onClick={handleReset}>
+                            <Button icon={<ClearOutlined/>} onClick={handleReset}>
                                 Сбросить
                             </Button>
                         </Space>
