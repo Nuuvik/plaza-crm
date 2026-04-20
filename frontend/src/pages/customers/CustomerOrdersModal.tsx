@@ -1,6 +1,6 @@
-import {useState, useEffect, useCallback} from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Modal, Table, Tag } from 'antd'
-import type {OrderListItem} from '../../types'
+import type { OrderListItem } from '../../types'
 import { getOrdersByCustomer } from '../../api/orders'
 import type { ColumnsType } from 'antd/es/table'
 import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from '../../constants/orderStatus'
@@ -20,7 +20,11 @@ const CustomerOrdersModal = ({ customerId, customerName, onClose }: Props) => {
     const load = useCallback(async () => {
         setLoading(true)
         try {
-            const res = await getOrdersByCustomer(customerId, { page, size: 10 })
+            const res = await getOrdersByCustomer(customerId, {
+                page,
+                size: 10,
+                sort: 'createdAt,desc',
+            })
             setOrders(res.data.content)
             setTotal(res.data.page.totalElements)
         } finally {

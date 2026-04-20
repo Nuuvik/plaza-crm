@@ -10,3 +10,12 @@ body,
     padding: 0;
     overflow: hidden;
 }
+
+/* Убираем подсветку отсортированного столбца */
+.ant-table-thead th.ant-table-column-sort {
+    background: transparent !important;
+}
+
+.ant-table-tbody .ant-table-column-sort {
+    background: transparent !important;
+}

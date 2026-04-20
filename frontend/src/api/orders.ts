@@ -53,6 +53,7 @@ export const removeItem = (orderId: number, productId: number) =>
 export const getOrdersByCustomer = (customerId: number, params?: {
     page?: number
     size?: number
+    sort?: string
 }) => api.get<Page<OrderListItem>>(`/customers/${customerId}/orders`, { params })
 
 export const updateInfo = (id: number, data: {

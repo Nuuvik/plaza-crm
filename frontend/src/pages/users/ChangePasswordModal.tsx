@@ -1,7 +1,7 @@
 import { Modal, Form, Input, message } from 'antd'
 import { changePasswordById, changeOwnPassword } from '../../api/auth'
 import axios from 'axios'
-import {extractErrorMessage} from "../../api/utils.ts";
+import { extractErrorMessage } from '../../api/utils'
 
 interface Props {
     open: boolean
@@ -21,7 +21,7 @@ const ChangePasswordModal = ({ open, onClose, userId }: Props) => {
             if (isOwnPassword) {
                 await changeOwnPassword({
                     currentPassword: values.currentPassword!,
-                    newPassword: values.newPassword
+                    newPassword: values.newPassword,
                 })
             } else {
                 await changePasswordById(userId!, { newPassword: values.newPassword })
@@ -63,7 +63,28 @@ const ChangePasswordModal = ({ open, onClose, userId }: Props) => {
                 <Form.Item
                     label="Новый пароль"
                     name="newPassword"
-                    rules={[{ required: true, message: 'Введите новый пароль' }, { min: 6, message: 'Минимум 6 символов' }]}
+                    rules={[
+                        { required: true, message: 'Введите новый пароль' },
+                        { min: 6, message: 'Минимум 6 символов' },
+                    ]}
+                >
+                    <Input.Password />
+                </Form.Item>
+                <Form.Item
+                    label="Подтверждение пароля"
+                    name="confirmPassword"
+                    dependencies={['newPassword']}
+                    rules={[
+                        { required: true, message: 'Подтвердите новый пароль' },
+                        ({ getFieldValue }) => ({
+                            validator(_, value) {
+                                if (!value || getFieldValue('newPassword') === value) {
+                                    return Promise.resolve()
+                                }
+                                return Promise.reject(new Error('Пароли не совпадают'))
+                            },
+                        }),
+                    ]}
                 >
                     <Input.Password />
                 </Form.Item>
