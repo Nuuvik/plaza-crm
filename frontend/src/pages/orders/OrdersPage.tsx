@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Table, Button, Space, Popconfirm, message, Tag, Select, DatePicker } from 'antd'
+import { Table, Button, Space, Popconfirm, message, Tag, Select, DatePicker, Modal, Form } from 'antd'
 import { ClearOutlined, PlusOutlined } from '@ant-design/icons'
 import { useSearchParams } from 'react-router-dom'
 import type { TableProps } from 'antd'
 import type { SorterResult } from 'antd/es/table/interface'
 import type { ColumnsType } from 'antd/es/table'
 import type { OrderListItem } from '../../types'
-import { getOrders, deleteOrder } from '../../api/orders'
+import { getOrders, deleteOrder, updatePayment, updateInfo } from '../../api/orders'
 import OrderModal from './OrderModal'
 import OrderDetailModal from './OrderDetailModal'
 import { extractErrorMessage } from '../../api/utils'
@@ -17,6 +17,13 @@ const { RangePicker } = DatePicker
 
 const DEFAULT_SORT_FIELD = 'createdAt'
 const DEFAULT_SORT_ORDER = 'desc'
+
+const PAYMENT_METHOD_OPTIONS = [
+    { value: 'Наличные', label: 'Наличные' },
+    { value: 'Карта', label: 'Карта' },
+    { value: 'Перевод', label: 'Перевод' },
+    { value: 'Онлайн', label: 'Онлайн' },
+]
 
 const OrdersPage = () => {
     const [searchParams, setSearchParams] = useSearchParams()
@@ -39,6 +46,12 @@ const OrdersPage = () => {
             ? [dayjs(fromParam), dayjs(toParam)]
             : null
     )
+
+    // Pay modal
+    const [payModalOrderId, setPayModalOrderId] = useState<number | null>(null)
+    const [payMethod, setPayMethod] = useState<string | undefined>()
+    const [payDate, setPayDate] = useState<dayjs.Dayjs | null>(null)
+    const [paySubmitting, setPaySubmitting] = useState(false)
 
     const load = useCallback(async () => {
         setLoading(true)
@@ -72,12 +85,31 @@ const OrdersPage = () => {
         }
     }
 
+    const handlePayConfirm = async () => {
+        if (!payModalOrderId) return
+        setPaySubmitting(true)
+        try {
+            await updateInfo(payModalOrderId, {
+                paymentMethod: payMethod ?? null,
+                paymentDate: payDate ? payDate.toISOString() : null,
+            })
+            await updatePayment(payModalOrderId, true)
+            messageApi.success('Заказ оплачен')
+            setPayModalOrderId(null)
+            load()
+        } catch (e) {
+            messageApi.error(extractErrorMessage(e))
+        } finally {
+            setPaySubmitting(false)
+        }
+    }
+
     const handleTableChange: TableProps<OrderListItem>['onChange'] = (pagination, _filters, sorter) => {
         const s = (Array.isArray(sorter) ? sorter[0] : sorter) as SorterResult<OrderListItem>
         const newField = s?.order ? (s.columnKey as string) ?? sortField : sortField
         const newOrder = s?.order
             ? s.order === 'descend' ? 'desc' : 'asc'
-            : sortOrder === 'desc' ? 'asc' : 'desc'   // null-клик → тоглим
+            : sortOrder === 'desc' ? 'asc' : 'desc'
 
         setSearchParams(prev => {
             prev.set('page', String(pagination.current ?? 1))
@@ -158,7 +190,6 @@ const OrdersPage = () => {
         {
             title: 'Сумма',
             dataIndex: 'totalPrice',
-            // backend entity field is totalAmount
             key: 'totalAmount',
             sorter: true,
             sortOrder: getSortOrder('totalAmount'),
@@ -185,13 +216,32 @@ const OrdersPage = () => {
             key: 'actions',
             render: (_, record) => (
                 <Space>
-                    <Button size="small" onClick={(e) => { e.stopPropagation(); setDetailOrderId(record.id) }}>
+                    <Button
+                        size="small"
+                        onClick={(e) => { e.stopPropagation(); setDetailOrderId(record.id) }}
+                    >
                         Открыть
                     </Button>
+                    {!record.paid && record.status !== 'CANCELLED' && (
+                        <Button
+                            size="small"
+                            type="primary"
+                            ghost
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                setPayMethod(undefined)
+                                setPayDate(dayjs())
+                                setPayModalOrderId(record.id)
+                            }}
+                        >
+                            Оплатить
+                        </Button>
+                    )}
                     <Popconfirm
                         title="Удалить заказ?"
                         onConfirm={(e) => { e?.stopPropagation(); handleDelete(record.id) }}
-                        okText="Да" cancelText="Нет"
+                        okText="Да"
+                        cancelText="Нет"
                     >
                         <Button size="small" danger onClick={(e) => e.stopPropagation()}>
                             Удалить
@@ -263,6 +313,38 @@ const OrdersPage = () => {
                     onClose={() => { setDetailOrderId(null); load() }}
                 />
             )}
+            <Modal
+                title="Оплата заказа"
+                open={payModalOrderId !== null}
+                onCancel={() => setPayModalOrderId(null)}
+                onOk={handlePayConfirm}
+                okText="Подтвердить оплату"
+                cancelText="Отмена"
+                okButtonProps={{ loading: paySubmitting }}
+                destroyOnHidden
+                width={360}
+            >
+                <Form layout="vertical" size="small" style={{ marginTop: 16 }}>
+                    <Form.Item label="Способ оплаты">
+                        <Select
+                            placeholder="Выберите способ"
+                            value={payMethod}
+                            onChange={setPayMethod}
+                            options={PAYMENT_METHOD_OPTIONS}
+                            allowClear
+                            style={{ width: '100%' }}
+                        />
+                    </Form.Item>
+                    <Form.Item label="Дата оплаты" style={{ marginBottom: 0 }}>
+                        <DatePicker
+                            value={payDate}
+                            onChange={setPayDate}
+                            format="DD.MM.YYYY"
+                            style={{ width: '100%' }}
+                        />
+                    </Form.Item>
+                </Form>
+            </Modal>
         </div>
     )
 }
