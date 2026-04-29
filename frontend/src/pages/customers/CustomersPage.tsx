@@ -182,7 +182,7 @@ const CustomersPage = () => {
                     </Button>
                     <Popconfirm
                         title="Удалить клиента?"
-                        onConfirm={() => handleDelete(record.id)}
+                        onConfirm={(e) => { e?.stopPropagation(); handleDelete(record.id) }}
                         okText="Да" cancelText="Нет"
                     >
                         <Button size="small" danger onClick={(e) => e.stopPropagation()}>
