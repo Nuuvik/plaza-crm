@@ -1,13 +1,14 @@
-import { Form, Input, Button, Card } from 'antd'
-import { useNavigate } from 'react-router-dom'
+import {Button, Card, Form, Input, theme} from 'antd'
+import {useNavigate} from 'react-router-dom'
 import api from '../../api'
-import { useAuth } from '../../store/useAuth'
-import type { LoginRequest } from '../../types'
+import {useAuth} from '../../store/useAuth'
+import type {LoginRequest} from '../../types'
 
 const LoginPage = () => {
     const navigate = useNavigate()
     const { login } = useAuth()
     const [form] = Form.useForm()
+    const { token } = theme.useToken()
 
     const onFinish = async (values: LoginRequest) => {
         try {
@@ -28,7 +29,7 @@ const LoginPage = () => {
             justifyContent: 'center',
             alignItems: 'center',
             minHeight: '100vh',
-            background: '#f0f2f5'
+            background: token.colorBgLayout,
         }}>
             <Card title="Plaza CRM" style={{ width: 360 }}>
                 <Form form={form} layout="vertical" onFinish={onFinish}>

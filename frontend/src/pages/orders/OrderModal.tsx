@@ -1,16 +1,26 @@
-import { useState, useEffect, useCallback } from 'react'
+import {useCallback, useEffect, useState} from 'react'
 import {
-    Modal, Form, Select, InputNumber, Button, Table, Space,
-    Input, DatePicker, Divider, message, Segmented
+    Button,
+    DatePicker,
+    Divider,
+    Form,
+    Input,
+    InputNumber,
+    message,
+    Modal,
+    Segmented,
+    Select,
+    Space,
+    Table,
+    theme
 } from 'antd'
-import { PlusOutlined, DeleteOutlined, UserAddOutlined, TeamOutlined } from '@ant-design/icons'
-import { getCustomers } from '../../api/customers'
-import { getProducts } from '../../api/products'
-import { createOrder } from '../../api/orders'
-import { createCustomer } from '../../api/customers'
-import type { Customer, Product } from '../../types'
+import {DeleteOutlined, PlusOutlined, TeamOutlined, UserAddOutlined} from '@ant-design/icons'
+import {createCustomer, getCustomers} from '../../api/customers'
+import {getProducts} from '../../api/products'
+import {createOrder} from '../../api/orders'
+import type {Customer, Product} from '../../types'
 import axios from 'axios'
-import { extractErrorMessage } from '../../api/utils'
+import {extractErrorMessage} from '../../api/utils'
 
 interface OrderItemForm {
     productId: number
@@ -79,6 +89,8 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
     const [loadingData, setLoadingData] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [messageApi, contextHolder] = message.useMessage()
+
+    const { token } = theme.useToken()
 
     const loadData = useCallback(async () => {
         setLoadingData(true)
@@ -339,9 +351,9 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
                 {customerMode === 'new' && (
                     <div
                         style={{
-                            background: '#fafafa',
-                            border: '1px solid #f0f0f0',
-                            borderRadius: 8,
+                            background: token.colorFillAlter,
+                            border: `1px solid ${token.colorBorderSecondary}`,
+                            borderRadius: token.borderRadius,
                             padding: '12px 12px 4px',
                             marginBottom: 12,
                         }}
