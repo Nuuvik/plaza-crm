@@ -2,8 +2,7 @@ import { useEffect } from 'react'
 import { Modal, Form, Input, InputNumber, message } from 'antd'
 import type { Product } from '../../types'
 import { createProduct, updateProduct } from '../../api/products'
-import axios from "axios";
-import {extractErrorMessage} from "../../api/utils.ts";
+import { extractErrorMessage, setFormServerErrors } from '../../api/utils'
 
 interface Props {
     open: boolean
@@ -37,7 +36,7 @@ const ProductModal = ({ open, product, onClose, onSuccess }: Props) => {
             }
             onSuccess()
         } catch (e: unknown) {
-            if (axios.isAxiosError(e) && e.response?.status === 400) {
+            if (!setFormServerErrors(form, e)) {
                 messageApi.error(extractErrorMessage(e))
             }
         }
@@ -55,22 +54,43 @@ const ProductModal = ({ open, product, onClose, onSuccess }: Props) => {
         >
             {contextHolder}
             <Form form={form} layout="vertical" onFinish={onFinish}>
-                <Form.Item label="Артикул" name="sku" rules={[{ required: true, message: 'Введите артикул' }]}>
+                <Form.Item
+                    label="Артикул" name="sku"
+                    rules={[
+                        { required: true, message: 'Введите артикул' },
+                        { max: 50, message: 'Не более 50 символов' },
+                    ]}
+                >
                     <Input />
                 </Form.Item>
-                <Form.Item label="Название" name="name" rules={[{ required: true, message: 'Введите название' }]}>
+                <Form.Item
+                    label="Название" name="name"
+                    rules={[{ required: true, message: 'Введите название' }]}
+                >
                     <Input />
                 </Form.Item>
-                <Form.Item label="Цена" name="price" rules={[{ required: true, message: 'Введите цену' }]}>
+                <Form.Item
+                    label="Цена" name="price"
+                    rules={[
+                        { required: true, message: 'Введите цену' },
+                        { type: 'number', min: 0.01, message: 'Цена должна быть больше 0' },
+                    ]}
+                >
                     <InputNumber min={0.01} precision={2} style={{ width: '100%' }} addonAfter="₽" />
                 </Form.Item>
                 <Form.Item label="Автомобиль" name="car">
                     <Input placeholder="Например: Lada Vesta" />
                 </Form.Item>
                 <Form.Item label="Дополнительно" name="additions">
-                    <Input.TextArea rows={2} placeholder="Доп. информация о товаре" />
+                    <Input.TextArea rows={2} />
                 </Form.Item>
-                <Form.Item label="Остаток" name="stockQuantity" rules={[{ required: true, message: 'Введите остаток' }]}>
+                <Form.Item
+                    label="Остаток" name="stockQuantity"
+                    rules={[
+                        { required: true, message: 'Введите остаток' },
+                        { type: 'number', min: 0, message: 'Остаток не может быть отрицательным' },
+                    ]}
+                >
                     <InputNumber min={0} style={{ width: '100%' }} addonAfter="шт." />
                 </Form.Item>
             </Form>

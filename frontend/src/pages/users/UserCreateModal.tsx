@@ -1,7 +1,6 @@
 import { Modal, Form, Input, Select, message } from 'antd'
 import { registerUser } from '../../api/auth'
-import axios from 'axios'
-import {extractErrorMessage} from "../../api/utils.ts";
+import { extractErrorMessage, setFormServerErrors } from '../../api/utils'
 
 interface Props {
     open: boolean
@@ -20,7 +19,7 @@ const UserCreateModal = ({ open, onClose, onSuccess }: Props) => {
             form.resetFields()
             onSuccess()
         } catch (e: unknown) {
-            if (axios.isAxiosError(e) && e.response?.status === 400) {
+            if (!setFormServerErrors(form, e)) {
                 messageApi.error(extractErrorMessage(e))
             }
         }
@@ -39,9 +38,12 @@ const UserCreateModal = ({ open, onClose, onSuccess }: Props) => {
             {contextHolder}
             <Form form={form} layout="vertical" onFinish={onFinish}>
                 <Form.Item
-                    label="Логин"
-                    name="username"
-                    rules={[{ required: true, message: 'Введите логин' }, { min: 2, message: 'Минимум 2 символа' }]}
+                    label="Логин" name="username"
+                    rules={[
+                        { required: true, message: 'Введите логин' },
+                        { min: 2, message: 'Минимум 2 символа' },
+                        { max: 50, message: 'Не более 50 символов' },
+                    ]}
                 >
                     <Input />
                 </Form.Item>

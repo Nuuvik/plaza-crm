@@ -437,6 +437,8 @@ const OrderDetailModal = ({ orderId, onClose }: Props) => {
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                                 rows={2}
+                                maxLength={1000}
+                                showCount
                                 disabled={isCancelled || actionLoading}
                             />
                         </Form.Item>

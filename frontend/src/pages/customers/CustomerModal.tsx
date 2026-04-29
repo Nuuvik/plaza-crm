@@ -2,8 +2,7 @@ import { useEffect } from 'react'
 import { Modal, Form, Input, message } from 'antd'
 import type { Customer } from '../../types'
 import { createCustomer, updateCustomer } from '../../api/customers'
-import axios from "axios";
-import {extractErrorMessage} from "../../api/utils.ts";
+import { extractErrorMessage, setFormServerErrors } from '../../api/utils'
 
 interface Props {
     open: boolean
@@ -37,8 +36,9 @@ const CustomerModal = ({ open, customer, onClose, onSuccess }: Props) => {
             }
             onSuccess()
         } catch (e: unknown) {
-            if (axios.isAxiosError(e) && e.response?.status === 400) {
-                messageApi.error(extractErrorMessage(e))            }
+            if (!setFormServerErrors(form, e)) {
+                messageApi.error(extractErrorMessage(e))
+            }
         }
     }
 
@@ -54,16 +54,37 @@ const CustomerModal = ({ open, customer, onClose, onSuccess }: Props) => {
         >
             {contextHolder}
             <Form form={form} layout="vertical" onFinish={onFinish}>
-                <Form.Item label="Имя" name="name" rules={[{ required: true, message: 'Введите имя' }]}>
+                <Form.Item
+                    label="Имя" name="name"
+                    rules={[
+                        { required: true, message: 'Введите имя' },
+                        { max: 150, message: 'Не более 150 символов' },
+                    ]}
+                >
                     <Input />
                 </Form.Item>
-                <Form.Item label="Телефон" name="phone" rules={[{ required: true, message: 'Введите телефон' }]}>
+                <Form.Item
+                    label="Телефон" name="phone"
+                    rules={[
+                        { required: true, message: 'Введите телефон' },
+                        { max: 20, message: 'Не более 20 символов' },
+                    ]}
+                >
                     <Input />
                 </Form.Item>
-                <Form.Item label="Email" name="email">
+                <Form.Item
+                    label="Email" name="email"
+                    rules={[
+                        { type: 'email', message: 'Некорректный формат email' },
+                        { max: 255, message: 'Не более 255 символов' },
+                    ]}
+                >
                     <Input />
                 </Form.Item>
-                <Form.Item label="Telegram" name="telegram">
+                <Form.Item
+                    label="Telegram" name="telegram"
+                    rules={[{ max: 20, message: 'Не более 20 символов' }]}
+                >
                     <Input />
                 </Form.Item>
                 <Form.Item label="Адрес" name="address">

@@ -1,7 +1,6 @@
 import { Modal, Form, Input, message } from 'antd'
 import { changePasswordById, changeOwnPassword } from '../../api/auth'
-import axios from 'axios'
-import { extractErrorMessage } from '../../api/utils'
+import { extractErrorMessage, setFormServerErrors } from '../../api/utils'
 
 interface Props {
     open: boolean
@@ -30,7 +29,7 @@ const ChangePasswordModal = ({ open, onClose, userId }: Props) => {
             form.resetFields()
             onClose()
         } catch (e: unknown) {
-            if (axios.isAxiosError(e) && e.response?.status === 400) {
+            if (!setFormServerErrors(form, e)) {
                 messageApi.error(extractErrorMessage(e))
             }
         }

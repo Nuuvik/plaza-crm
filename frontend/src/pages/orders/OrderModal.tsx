@@ -10,7 +10,7 @@ import { createOrder } from '../../api/orders'
 import { createCustomer } from '../../api/customers'
 import type { Customer, Product } from '../../types'
 import axios from 'axios'
-import {extractErrorMessage} from "../../api/utils.ts";
+import { extractErrorMessage } from '../../api/utils'
 
 interface OrderItemForm {
     productId: number
@@ -43,6 +43,12 @@ const CUSTOMER_MODE_OPTIONS = [
     { value: 'new', label: <><UserAddOutlined /> Новый клиент</> },
 ]
 
+interface NewCustomerErrors {
+    name?: string
+    phone?: string
+    email?: string
+}
+
 const OrderModal = ({ open, onClose, onSuccess }: Props) => {
     const [customers, setCustomers] = useState<Customer[]>([])
     const [products, setProducts] = useState<Product[]>([])
@@ -50,6 +56,7 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
 
     // Existing customer
     const [customerId, setCustomerId] = useState<number | null>(null)
+    const [customerIdError, setCustomerIdError] = useState<string | undefined>()
 
     // New customer fields
     const [newCustomerName, setNewCustomerName] = useState('')
@@ -57,6 +64,7 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
     const [newCustomerEmail, setNewCustomerEmail] = useState('')
     const [newCustomerTelegram, setNewCustomerTelegram] = useState('')
     const [newCustomerAddress, setNewCustomerAddress] = useState('')
+    const [newCustomerErrors, setNewCustomerErrors] = useState<NewCustomerErrors>({})
 
     // Order fields
     const [items, setItems] = useState<OrderItemForm[]>([])
@@ -66,6 +74,7 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
     const [paymentMethod, setPaymentMethod] = useState<string | undefined>(undefined)
     const [paymentDate, setPaymentDate] = useState<import('dayjs').Dayjs | null>(null)
     const [notes, setNotes] = useState('')
+    const [itemsError, setItemsError] = useState<string | undefined>()
 
     const [loadingData, setLoadingData] = useState(false)
     const [submitting, setSubmitting] = useState(false)
@@ -91,11 +100,13 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
         if (!open) return
         setCustomerMode('existing')
         setCustomerId(null)
+        setCustomerIdError(undefined)
         setNewCustomerName('')
         setNewCustomerPhone('')
         setNewCustomerEmail('')
         setNewCustomerTelegram('')
         setNewCustomerAddress('')
+        setNewCustomerErrors({})
         setItems([])
         setSelectedProductId(null)
         setQuantity(1)
@@ -103,11 +114,13 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
         setPaymentMethod(undefined)
         setPaymentDate(null)
         setNotes('')
+        setItemsError(undefined)
         loadData()
     }, [open, loadData])
 
     const addItem = () => {
         if (!selectedProductId) return
+        setItemsError(undefined)
         const existing = items.find(i => i.productId === selectedProductId)
         if (existing) {
             setItems(items.map(i =>
@@ -124,6 +137,24 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
 
     const removeItem = (productId: number) => {
         setItems(items.filter(i => i.productId !== productId))
+    }
+
+    const validateNewCustomer = (): NewCustomerErrors => {
+        const errors: NewCustomerErrors = {}
+        if (!newCustomerName.trim()) {
+            errors.name = 'Введите имя клиента'
+        } else if (newCustomerName.trim().length > 150) {
+            errors.name = 'Не более 150 символов'
+        }
+        if (!newCustomerPhone.trim()) {
+            errors.phone = 'Введите телефон'
+        } else if (newCustomerPhone.trim().length > 20) {
+            errors.phone = 'Не более 20 символов'
+        }
+        if (newCustomerEmail && newCustomerEmail.length > 255) {
+            errors.email = 'Не более 255 символов'
+        }
+        return errors
     }
 
     const handleSubmit = async () => {
@@ -145,31 +176,42 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
             setQuantity(1)
         }
 
-        if (currentItems.length === 0) {
-            messageApi.error('Добавьте хотя бы один товар')
-            return
-        }
+        // Собираем все ошибки сразу, не прерываясь на первой
+        let hasErrors = false
 
-        // Валидация клиента
-        let resolvedCustomerId: number
+        if (currentItems.length === 0) {
+            setItemsError('Добавьте хотя бы один товар')
+            hasErrors = true
+        } else {
+            setItemsError(undefined)
+        }
 
         if (customerMode === 'existing') {
             if (!customerId) {
-                messageApi.error('Выберите клиента')
-                return
+                setCustomerIdError('Выберите клиента')
+                hasErrors = true
+            } else {
+                setCustomerIdError(undefined)
             }
-            resolvedCustomerId = customerId
         } else {
-            if (!newCustomerName.trim()) {
-                messageApi.error('Введите имя клиента')
-                return
+            const errors = validateNewCustomer()
+            if (Object.keys(errors).length > 0) {
+                setNewCustomerErrors(errors)
+                hasErrors = true
+            } else {
+                setNewCustomerErrors({})
             }
-            if (!newCustomerPhone.trim()) {
-                messageApi.error('Введите телефон клиента')
-                return
-            }
+        }
 
-            setSubmitting(true)
+        if (hasErrors) return
+
+        setSubmitting(true)
+
+        let resolvedCustomerId: number
+
+        if (customerMode === 'existing') {
+            resolvedCustomerId = customerId!
+        } else {
             try {
                 const res = await createCustomer({
                     name: newCustomerName.trim(),
@@ -179,9 +221,19 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
                     address: newCustomerAddress.trim() || '',
                 })
                 resolvedCustomerId = res.data.id
-                messageApi.success('Клиент создан')
             } catch (e: unknown) {
                 if (axios.isAxiosError(e) && e.response?.status === 400) {
+                    const data = e.response.data
+                    if (data?.errors) {
+                        setNewCustomerErrors({
+                            name: data.errors.name,
+                            phone: data.errors.phone,
+                            email: data.errors.email,
+                        })
+                    } else {
+                        messageApi.error(extractErrorMessage(e, 'Ошибка при создании клиента'))
+                    }
+                } else {
                     messageApi.error(extractErrorMessage(e, 'Ошибка при создании клиента'))
                 }
                 setSubmitting(false)
@@ -189,7 +241,6 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
             }
         }
 
-        setSubmitting(true)
         try {
             await createOrder({
                 customerId: resolvedCustomerId,
@@ -202,9 +253,7 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
             messageApi.success('Заказ создан')
             onSuccess()
         } catch (e: unknown) {
-            if (axios.isAxiosError(e) && e.response?.status === 400) {
-                messageApi.error(extractErrorMessage(e, 'Ошибка при создании заказа'))
-            }
+            messageApi.error(extractErrorMessage(e, 'Ошибка при создании заказа'))
         } finally {
             setSubmitting(false)
         }
@@ -250,19 +299,32 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
                     <Segmented
                         options={CUSTOMER_MODE_OPTIONS}
                         value={customerMode}
-                        onChange={(v) => setCustomerMode(v as 'existing' | 'new')}
+                        onChange={(v) => {
+                            setCustomerMode(v as 'existing' | 'new')
+                            setCustomerIdError(undefined)
+                            setNewCustomerErrors({})
+                        }}
                         block
                     />
                 </Form.Item>
 
                 {/* Существующий клиент */}
                 {customerMode === 'existing' && (
-                    <Form.Item label="Клиент" required style={{ marginBottom: 12 }}>
+                    <Form.Item
+                        label="Клиент"
+                        required
+                        style={{ marginBottom: 12 }}
+                        validateStatus={customerIdError ? 'error' : ''}
+                        help={customerIdError}
+                    >
                         <Select
                             showSearch
                             placeholder="Выберите клиента"
                             value={customerId}
-                            onChange={setCustomerId}
+                            onChange={(v) => {
+                                setCustomerId(v)
+                                setCustomerIdError(undefined)
+                            }}
                             loading={loadingData}
                             disabled={loadingData}
                             filterOption={(input, option) =>
@@ -285,27 +347,54 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
                         }}
                     >
                         <div style={{ display: 'flex', gap: 12 }}>
-                            <Form.Item label="Имя" required style={{ flex: 1, marginBottom: 8 }}>
+                            <Form.Item
+                                label="Имя" required style={{ flex: 1, marginBottom: 8 }}
+                                validateStatus={newCustomerErrors.name ? 'error' : ''}
+                                help={newCustomerErrors.name}
+                            >
                                 <Input
                                     placeholder="Иванов Иван"
                                     value={newCustomerName}
-                                    onChange={e => setNewCustomerName(e.target.value)}
+                                    onChange={e => {
+                                        setNewCustomerName(e.target.value)
+                                        if (newCustomerErrors.name) {
+                                            setNewCustomerErrors(p => ({ ...p, name: undefined }))
+                                        }
+                                    }}
                                 />
                             </Form.Item>
-                            <Form.Item label="Телефон" required style={{ flex: 1, marginBottom: 8 }}>
+                            <Form.Item
+                                label="Телефон" required style={{ flex: 1, marginBottom: 8 }}
+                                validateStatus={newCustomerErrors.phone ? 'error' : ''}
+                                help={newCustomerErrors.phone}
+                            >
                                 <Input
                                     placeholder="+7 900 000-00-00"
                                     value={newCustomerPhone}
-                                    onChange={e => setNewCustomerPhone(e.target.value)}
+                                    onChange={e => {
+                                        setNewCustomerPhone(e.target.value)
+                                        if (newCustomerErrors.phone) {
+                                            setNewCustomerErrors(p => ({ ...p, phone: undefined }))
+                                        }
+                                    }}
                                 />
                             </Form.Item>
                         </div>
                         <div style={{ display: 'flex', gap: 12 }}>
-                            <Form.Item label="Email" style={{ flex: 1, marginBottom: 8 }}>
+                            <Form.Item
+                                label="Email" style={{ flex: 1, marginBottom: 8 }}
+                                validateStatus={newCustomerErrors.email ? 'error' : ''}
+                                help={newCustomerErrors.email}
+                            >
                                 <Input
                                     placeholder="mail@example.com"
                                     value={newCustomerEmail}
-                                    onChange={e => setNewCustomerEmail(e.target.value)}
+                                    onChange={e => {
+                                        setNewCustomerEmail(e.target.value)
+                                        if (newCustomerErrors.email) {
+                                            setNewCustomerErrors(p => ({ ...p, email: undefined }))
+                                        }
+                                    }}
                                 />
                             </Form.Item>
                             <Form.Item label="Telegram" style={{ flex: 1, marginBottom: 8 }}>
@@ -368,7 +457,10 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
                             showSearch
                             placeholder="Выберите товар"
                             value={selectedProductId}
-                            onChange={setSelectedProductId}
+                            onChange={(v) => {
+                                setSelectedProductId(v)
+                                setItemsError(undefined)
+                            }}
                             style={{ flex: 1 }}
                             loading={loadingData}
                             disabled={loadingData}
@@ -398,9 +490,14 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
                     rowKey="productId"
                     pagination={false}
                     size="small"
-                    style={{ marginBottom: 12 }}
+                    style={{ marginBottom: itemsError ? 4 : 12 }}
                     locale={{ emptyText: 'Товары не добавлены' }}
                 />
+                {itemsError && (
+                    <div style={{ color: '#ff4d4f', fontSize: 14, marginBottom: 12 }}>
+                        {itemsError}
+                    </div>
+                )}
 
                 <Divider style={{ margin: '4px 0 12px' }} />
 
@@ -410,6 +507,8 @@ const OrderModal = ({ open, onClose, onSuccess }: Props) => {
                         value={notes}
                         onChange={e => setNotes(e.target.value)}
                         rows={2}
+                        maxLength={1000}
+                        showCount
                         disabled={loadingData}
                     />
                 </Form.Item>
