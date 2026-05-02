@@ -26,6 +26,18 @@ const UsersPage = () => {
     const [changePasswordUserId, setChangePasswordUserId] = useState<number | null>(null)
     const [messageApi, contextHolder] = message.useMessage()
 
+    const ROLE_LABELS: Record<string, string> = {
+        ADMIN: 'Администратор',
+        MANAGER: 'Менеджер',
+        WAREHOUSE: 'Работник склада',
+    }
+
+    const ROLE_COLORS: Record<string, string> = {
+        ADMIN: 'red',
+        MANAGER: 'blue',
+        WAREHOUSE: 'green',
+    }
+
     const load = useCallback(async () => {
         setLoading(true)
         try {
@@ -86,8 +98,8 @@ const UsersPage = () => {
             sorter: true,
             sortOrder: getSortOrder('role'),
             render: (v) => (
-                <Tag color={v === 'ADMIN' ? 'red' : 'blue'}>
-                    {v === 'ADMIN' ? 'Администратор' : 'Менеджер'}
+                <Tag color={ROLE_COLORS[v] ?? 'default'}>
+                    {ROLE_LABELS[v] ?? v}
                 </Tag>
             ),
         },

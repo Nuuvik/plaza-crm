@@ -3,6 +3,7 @@ package ru.plaza.plaza_crm.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -44,10 +45,15 @@ public class SecurityConfig {
                         .requestMatchers("/users/**").hasRole("ADMIN")
                         .requestMatchers("/auth/register").hasRole("ADMIN")
                         .requestMatchers("/audit-logs/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/cars/**").hasAnyRole("ADMIN", "WAREHOUSE")
+                        .requestMatchers("/cars/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/customers/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/orders/**").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/products/**").hasAnyRole("ADMIN", "MANAGER", "WAREHOUSE")
                         .requestMatchers("/products/**").hasAnyRole("ADMIN", "MANAGER")
                         .requestMatchers("/stats/**").hasAnyRole("ADMIN", "MANAGER")
+                        .requestMatchers("/components/**").hasAnyRole("ADMIN", "MANAGER", "WAREHOUSE")
+                        .requestMatchers("/assembly/**").hasAnyRole("ADMIN", "MANAGER", "WAREHOUSE")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

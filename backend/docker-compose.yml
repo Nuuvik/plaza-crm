@@ -19,6 +19,8 @@ services:
     restart: unless-stopped
     ports:
       - "8080:2209"
+    volumes:
+      - ./logs:/app/logs
     environment:
       SERVER_PORT: 2209
       SPRING_APPLICATION_NAME: plaza-crm

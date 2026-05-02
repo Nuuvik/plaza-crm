@@ -25,7 +25,7 @@ public class ProductRequest {
     @DecimalMin(value = "0.0", inclusive = false)
     private BigDecimal price;
 
-    private String car;
+    private Long carId;
 
     @Min(0)
     private int stockQuantity;

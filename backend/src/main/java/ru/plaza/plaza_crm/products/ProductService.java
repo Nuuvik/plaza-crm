@@ -8,6 +8,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.plaza.plaza_crm.audit.AuditService;
+import ru.plaza.plaza_crm.cars.Car;
+import ru.plaza.plaza_crm.cars.CarRepository;
+import ru.plaza.plaza_crm.cars.CarResponse;
 import ru.plaza.plaza_crm.orders.OrderRepository;
 import ru.plaza.plaza_crm.util.exception.BadRequestException;
 import ru.plaza.plaza_crm.util.exception.ResourceNotFoundException;
@@ -20,13 +23,15 @@ public class ProductService {
     private final ProductRepository repository;
     private final AuditService auditService;
     private final OrderRepository orderRepository;
+    private final CarRepository carRepository;
 
     @Autowired
     public ProductService(ProductRepository repository, AuditService auditService,
-                          OrderRepository orderRepository) {
+                          OrderRepository orderRepository, CarRepository carRepository) {
         this.repository = repository;
         this.auditService = auditService;
         this.orderRepository = orderRepository;
+        this.carRepository = carRepository;
     }
 
     @Transactional
@@ -42,7 +47,7 @@ public class ProductService {
         product.setSku(request.getSku());
         product.setName(request.getName());
         product.setPrice(request.getPrice());
-        product.setCar(request.getCar());
+        product.setCar(resolveCar(request.getCarId()));
         product.setStockQuantity(request.getStockQuantity());
         product.setAdditions(request.getAdditions());
 
@@ -71,7 +76,7 @@ public class ProductService {
         product.setSku(request.getSku());
         product.setName(request.getName());
         product.setPrice(request.getPrice());
-        product.setCar(request.getCar());
+        product.setCar(resolveCar(request.getCarId()));
         product.setStockQuantity(request.getStockQuantity());
         product.setAdditions(request.getAdditions());
         repository.save(product);
@@ -141,20 +146,20 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public long countOrders(Long id) {
-        if (!repository.findByIdAndDeletedFalse(id).isPresent()) {
+        if (repository.findByIdAndDeletedFalse(id).isEmpty()) {
             throw new ResourceNotFoundException("Product not found");
         }
         return orderRepository.countOrdersWithProduct(id);
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> findAll(String car, String name, String sku, Pageable pageable) {
-        return repository.search(car, name, sku, pageable).map(this::mapToResponse);
+    public Page<ProductResponse> findAll(Long carId, String name, String sku, Pageable pageable) {
+        return repository.search(carId, name, sku, pageable).map(this::mapToResponse);
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> findAllArchived(String car, String name, String sku, Pageable pageable) {
-        return repository.searchArchived(car, name, sku, pageable).map(this::mapToResponse);
+    public Page<ProductResponse> findAllArchived(Long carId, String name, String sku, Pageable pageable) {
+        return repository.searchArchived(carId, name, sku, pageable).map(this::mapToResponse);
     }
 
     @Transactional(readOnly = true)
@@ -177,13 +182,27 @@ public class ProductService {
         return mapToResponse(product);
     }
 
+    // вспомогательный метод — carId опционален
+    private Car resolveCar(Long carId) {
+        if (carId == null) return null;
+        return carRepository.findByIdAndDeletedFalse(carId)
+                .orElseThrow(() -> new ResourceNotFoundException("Автомобиль не найден"));
+    }
+
     private ProductResponse mapToResponse(Product product) {
+        CarResponse carResponse = product.getCar() != null
+                ? new CarResponse(
+                product.getCar().getId(),
+                product.getCar().getBrand(),
+                product.getCar().getModel())
+                : null;
+
         return new ProductResponse(
                 product.getId(),
                 product.getSku(),
                 product.getName(),
                 product.getPrice(),
-                product.getCar(),
+                carResponse,
                 product.getStockQuantity(),
                 product.getAdditions(),
                 product.isArchived()

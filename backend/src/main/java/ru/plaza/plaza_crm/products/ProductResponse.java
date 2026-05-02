@@ -1,6 +1,7 @@
 package ru.plaza.plaza_crm.products;
 
 import lombok.Getter;
+import ru.plaza.plaza_crm.cars.CarResponse;
 
 import java.math.BigDecimal;
 
@@ -11,13 +12,13 @@ public class ProductResponse {
     private String sku;
     private String name;
     private BigDecimal price;
-    private String car;
+    private CarResponse car;
     private int stockQuantity;
     private String additions;
     private boolean archived;
 
     public ProductResponse(Long id, String sku, String name, BigDecimal price,
-                           String car, int stockQuantity, String additions, boolean archived) {
+                           CarResponse car, int stockQuantity, String additions, boolean archived) {
         this.id = id;
         this.sku = sku;
         this.name = name;

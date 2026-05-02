@@ -30,3 +30,5 @@ springdoc.swagger-ui.path=/swagger-ui.html
 springdoc.api-docs.path=/v3/api-docs
 
 cors.allowed-origins=http://localhost:5173,http://localhost:3000
+
+logging.file.path=logs

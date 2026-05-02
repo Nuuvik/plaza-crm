@@ -1,0 +1,4 @@
+
+DROP TABLE IF EXISTS product_cars;
+
+ALTER TABLE products ADD COLUMN car_id BIGINT REFERENCES cars(id);

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Button, Input, message, Modal, Space, Table, Tabs, Tag } from 'antd'
+import { Button, Input, message, Modal, Select, Space, Table, Tabs, Tag } from 'antd'
 import { ClearOutlined, PlusOutlined } from '@ant-design/icons'
 import { useSearchParams } from 'react-router-dom'
 import type { TableProps } from 'antd'
 import type { SorterResult } from 'antd/es/table/interface'
 import type { ColumnsType } from 'antd/es/table'
-import type { Product } from '../../types'
+import type { Car, Product } from '../../types'
 import {
     archiveProduct,
     deleteProduct,
@@ -14,6 +14,7 @@ import {
     getProducts,
     unarchiveProduct,
 } from '../../api/products'
+import { getCars } from '../../api/cars'
 import ProductModal from './ProductModal'
 import { useDebouncedCallback } from 'use-debounce'
 
@@ -28,7 +29,7 @@ const ProductsPage = () => {
     const page = parseInt(searchParams.get('page') ?? '1') - 1
     const nameParam = searchParams.get('name') ?? ''
     const skuParam = searchParams.get('sku') ?? ''
-    const carParam = searchParams.get('car') ?? ''
+    const carIdParam = searchParams.get('carId') ? Number(searchParams.get('carId')) : undefined
     const tab = (searchParams.get('tab') ?? 'active') as 'active' | 'archived'
     const sortField = searchParams.get('sortField') ?? DEFAULT_SORT_FIELD
     const sortOrder = searchParams.get('sortOrder') ?? DEFAULT_SORT_ORDER
@@ -36,12 +37,17 @@ const ProductsPage = () => {
     const [products, setProducts] = useState<Product[]>([])
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
+    const [cars, setCars] = useState<Car[]>([])
     const [nameInput, setNameInput] = useState(nameParam)
     const [skuInput, setSkuInput] = useState(skuParam)
-    const [carInput, setCarInput] = useState(carParam)
+    const [carIdInput, setCarIdInput] = useState<number | undefined>(carIdParam)
     const [modalOpen, setModalOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
     const [messageApi, contextHolder] = message.useMessage()
+
+    useEffect(() => {
+        getCars({ size: 200 }).then(r => setCars(r.data.content))
+    }, [])
 
     const load = useCallback(async () => {
         setLoading(true)
@@ -49,7 +55,7 @@ const ProductsPage = () => {
             const params = {
                 name: nameParam || undefined,
                 sku: skuParam || undefined,
-                car: carParam || undefined,
+                carId: carIdParam,
                 page,
                 size: 10,
                 sort: `${sortField},${sortOrder}`,
@@ -62,13 +68,13 @@ const ProductsPage = () => {
         } finally {
             setLoading(false)
         }
-    }, [page, nameParam, skuParam, carParam, tab, sortField, sortOrder])
+    }, [page, nameParam, skuParam, carIdParam, tab, sortField, sortOrder])
 
     useEffect(() => {
         setNameInput(nameParam)
         setSkuInput(skuParam)
-        setCarInput(carParam)
-    }, [nameParam, skuParam, carParam])
+        setCarIdInput(carIdParam)
+    }, [nameParam, skuParam, carIdParam])
 
     useEffect(() => {
         load()
@@ -85,23 +91,32 @@ const ProductsPage = () => {
 
     const handleNameChange = useDebouncedCallback((v: string) => updateParam('name', v), 300)
     const handleSkuChange = useDebouncedCallback((v: string) => updateParam('sku', v), 300)
-    const handleCarChange = useDebouncedCallback((v: string) => updateParam('car', v), 300)
+
+    const handleCarChange = (value: number | undefined) => {
+        setCarIdInput(value)
+        setSearchParams(prev => {
+            if (value) prev.set('carId', String(value))
+            else prev.delete('carId')
+            prev.set('page', '1')
+            return prev
+        })
+    }
 
     const handleReset = () => {
         setNameInput('')
         setSkuInput('')
-        setCarInput('')
+        setCarIdInput(undefined)
         setSearchParams({ tab, page: '1' })
     }
 
-    const hasFilters = !!(nameParam || skuParam || carParam)
+    const hasFilters = !!(nameParam || skuParam || carIdParam)
 
     const handleTableChange: TableProps<Product>['onChange'] = (pagination, _filters, sorter) => {
         const s = (Array.isArray(sorter) ? sorter[0] : sorter) as SorterResult<Product>
         const newField = s?.order ? (s.columnKey as string) ?? sortField : sortField
         const newOrder = s?.order
             ? s.order === 'descend' ? 'desc' : 'asc'
-            : sortOrder === 'desc' ? 'asc' : 'desc'   // null-клик → тоглим
+            : sortOrder === 'desc' ? 'asc' : 'desc'
 
         setSearchParams(prev => {
             prev.set('page', String(pagination.current ?? 1))
@@ -114,7 +129,7 @@ const ProductsPage = () => {
     const handleTabChange = (key: string) => {
         setNameInput('')
         setSkuInput('')
-        setCarInput('')
+        setCarIdInput(undefined)
         setSearchParams({ tab: key, page: '1' })
     }
 
@@ -211,9 +226,7 @@ const ProductsPage = () => {
             title: 'Автомобиль',
             dataIndex: 'car',
             key: 'car',
-            sorter: true,
-            sortOrder: getSortOrder('car'),
-            render: (v) => v || '—',
+            render: (car: Car | null) => car ? `${car.brand} ${car.model}` : '—',
         },
         {
             title: 'Остаток',
@@ -267,7 +280,7 @@ const ProductsPage = () => {
             title: 'Автомобиль',
             dataIndex: 'car',
             key: 'car',
-            render: (v) => v || '—',
+            render: (car: Car | null) => car ? `${car.brand} ${car.model}` : '—',
         },
         {
             title: 'Действия',
@@ -313,13 +326,16 @@ const ProductsPage = () => {
                     allowClear
                     onClear={() => { setSkuInput(''); handleSkuChange('') }}
                 />
-                <Input
-                    placeholder="Автомобиль"
-                    style={{ width: 180 }}
-                    value={carInput}
-                    onChange={(e) => { setCarInput(e.target.value); handleCarChange(e.target.value) }}
+                <Select
                     allowClear
-                    onClear={() => { setCarInput(''); handleCarChange('') }}
+                    placeholder="Автомобиль"
+                    style={{ width: 200 }}
+                    value={carIdInput}
+                    onChange={handleCarChange}
+                    options={cars.map(c => ({
+                        value: c.id,
+                        label: `${c.brand} ${c.model}`,
+                    }))}
                 />
                 {hasFilters && (
                     <Button icon={<ClearOutlined />} onClick={handleReset}>
@@ -328,7 +344,11 @@ const ProductsPage = () => {
                 )}
                 {tab === 'active' && (
                     <div style={{ marginLeft: 'auto' }}>
-                        <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingProduct(null); setModalOpen(true) }}>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => { setEditingProduct(null); setModalOpen(true) }}
+                        >
                             Новый товар
                         </Button>
                     </div>

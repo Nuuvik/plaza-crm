@@ -23,27 +23,29 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     boolean existsBySkuAndIdNotAndDeletedFalse(String sku, Long id);
 
     @Query("""
-            SELECT p FROM Product p
-            WHERE p.deleted = false
-            AND p.archived = false
-            AND (CAST(:car AS string) IS NULL OR p.car = CAST(:car AS string))
-            AND (CAST(:name AS string) IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')))
-            AND (CAST(:sku AS string) IS NULL OR LOWER(p.sku) LIKE LOWER(CONCAT('%', CAST(:sku AS string), '%')))
-            """)
-    Page<Product> search(@Param("car") String car,
+        SELECT p FROM Product p
+        LEFT JOIN FETCH p.car
+        WHERE p.deleted = false
+        AND p.archived = false
+        AND (:carId IS NULL OR p.car.id = :carId)
+        AND (CAST(:name AS string) IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')))
+        AND (CAST(:sku AS string) IS NULL OR LOWER(p.sku) LIKE LOWER(CONCAT('%', CAST(:sku AS string), '%')))
+        """)
+    Page<Product> search(@Param("carId") Long carId,
                          @Param("name") String name,
                          @Param("sku") String sku,
                          Pageable pageable);
 
     @Query("""
-            SELECT p FROM Product p
-            WHERE p.deleted = false
-            AND p.archived = true
-            AND (CAST(:car AS string) IS NULL OR p.car = CAST(:car AS string))
-            AND (CAST(:name AS string) IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')))
-            AND (CAST(:sku AS string) IS NULL OR LOWER(p.sku) LIKE LOWER(CONCAT('%', CAST(:sku AS string), '%')))
-            """)
-    Page<Product> searchArchived(@Param("car") String car,
+        SELECT p FROM Product p
+        LEFT JOIN FETCH p.car
+        WHERE p.deleted = false
+        AND p.archived = true
+        AND (:carId IS NULL OR p.car.id = :carId)
+        AND (CAST(:name AS string) IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:name AS string), '%')))
+        AND (CAST(:sku AS string) IS NULL OR LOWER(p.sku) LIKE LOWER(CONCAT('%', CAST(:sku AS string), '%')))
+        """)
+    Page<Product> searchArchived(@Param("carId") Long carId,
                                  @Param("name") String name,
                                  @Param("sku") String sku,
                                  Pageable pageable);

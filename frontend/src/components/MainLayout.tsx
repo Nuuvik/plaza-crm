@@ -13,6 +13,8 @@ import {
     SettingOutlined,
     SunOutlined,
     MoonOutlined,
+    InboxOutlined,
+    CarOutlined,
 } from '@ant-design/icons'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { removeToken } from '../store/auth'
@@ -22,6 +24,12 @@ import type { User } from '../types'
 import ChangePasswordModal from '../pages/users/ChangePasswordModal'
 
 const { Sider, Content, Header } = Layout
+
+const ROLE_LABELS: Record<string, string> = {
+    ADMIN: 'Администратор',
+    MANAGER: 'Менеджер',
+    WAREHOUSE: 'Работник склада',
+}
 
 const MainLayout = () => {
     const navigate = useNavigate()
@@ -40,27 +48,41 @@ const MainLayout = () => {
         navigate('/login')
     }
 
-    const adminPaths = ['/users', '/audit-logs']
+    const adminPaths = ['/users', '/audit-logs', '/cars']
     const defaultOpenKeys = adminPaths.includes(location.pathname) ? ['admin'] : []
 
+    const isWarehouse = user?.role === 'WAREHOUSE'
+    const isAdmin = user?.role === 'ADMIN'
+
     const menuItems = [
-        { key: '/dashboard', icon: <DashboardOutlined />, label: 'Дашборд' },
-        { key: '/customers', icon: <TeamOutlined />, label: 'Клиенты' },
-        { key: '/orders', icon: <ShoppingCartOutlined />, label: 'Заказы' },
+        // дашборд — только ADMIN и MANAGER
+        ...(!isWarehouse ? [
+            { key: '/dashboard', icon: <DashboardOutlined />, label: 'Дашборд' },
+        ] : []),
+
+        // клиенты и заказы — только ADMIN и MANAGER
+        ...(!isWarehouse ? [
+            { key: '/customers', icon: <TeamOutlined />, label: 'Клиенты' },
+            { key: '/orders', icon: <ShoppingCartOutlined />, label: 'Заказы' },
+        ] : []),
+
+        // товары и склад — все роли
         { key: '/products', icon: <BoxPlotOutlined />, label: 'Товары' },
-        ...(user?.role === 'ADMIN'
-            ? [
-                {
-                    key: 'admin',
-                    icon: <SettingOutlined />,
-                    label: 'Служебные',
-                    children: [
-                        { key: '/users', icon: <UsergroupAddOutlined />, label: 'Пользователи' },
-                        { key: '/audit-logs', icon: <AuditOutlined />, label: 'Логи' },
-                    ],
-                },
-            ]
-            : []),
+        { key: '/warehouse', icon: <InboxOutlined />, label: 'Склад' },
+
+        // служебные — только ADMIN
+        ...(isAdmin ? [
+            {
+                key: 'admin',
+                icon: <SettingOutlined />,
+                label: 'Служебные',
+                children: [
+                    { key: '/cars', icon: <CarOutlined />, label: 'Автомобили' },
+                    { key: '/users', icon: <UsergroupAddOutlined />, label: 'Пользователи' },
+                    { key: '/audit-logs', icon: <AuditOutlined />, label: 'Логи' },
+                ],
+            },
+        ] : []),
     ]
 
     const userDropdownItems = [
@@ -132,7 +154,7 @@ const MainLayout = () => {
                                 <Avatar icon={<UserOutlined />} />
                                 <span>{user.username}</span>
                                 <span style={{ color: token.colorTextSecondary, fontSize: 12 }}>
-                                    {user.role}
+                                    {ROLE_LABELS[user.role] ?? user.role}
                                 </span>
                             </Space>
                         </Dropdown>

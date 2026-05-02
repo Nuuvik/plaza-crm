@@ -6,7 +6,7 @@ export interface LoginRequest {
 export interface User {
     id: number
     username: string
-    role: 'ADMIN' | 'MANAGER'
+    role: 'ADMIN' | 'MANAGER' | 'WAREHOUSE'
     createdAt: string
 }
 
@@ -25,7 +25,7 @@ export interface Product {
     sku: string
     name: string
     price: number
-    car: string
+    car: Car | null
     stockQuantity: number
     additions: string
     archived: boolean
@@ -66,11 +66,41 @@ export interface Order {
     items: OrderItem[]
 }
 
+export interface Car {
+    id: number
+    brand: string
+    model: string
+}
+
 export interface PageMeta {
     totalElements: number
     totalPages: number
     size: number
     number: number
+}
+
+export interface Component {
+    id: number
+    sku: string
+    name: string
+    stockQuantity: number
+}
+
+export interface ProductComponent {
+    id: number
+    componentId: number
+    componentSku: string
+    componentName: string
+    quantity: number
+}
+
+export interface AssemblyLog {
+    id: number
+    productId: number
+    productName: string
+    quantity: number
+    username: string
+    createdAt: string
 }
 
 export interface Page<T> {

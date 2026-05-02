@@ -12,7 +12,7 @@ const UserCreateModal = ({ open, onClose, onSuccess }: Props) => {
     const [form] = Form.useForm()
     const [messageApi, contextHolder] = message.useMessage()
 
-    const onFinish = async (values: { username: string; password: string; role: 'ADMIN' | 'MANAGER' }) => {
+    const onFinish = async (values: { username: string; password: string; role: 'ADMIN' | 'MANAGER' | 'WAREHOUSE' }) => {
         try {
             await registerUser(values)
             messageApi.success('Пользователь создан')
@@ -61,7 +61,8 @@ const UserCreateModal = ({ open, onClose, onSuccess }: Props) => {
                 >
                     <Select options={[
                         { value: 'ADMIN', label: 'Администратор' },
-                        { value: 'MANAGER', label: 'Менеджер' }
+                        { value: 'MANAGER', label: 'Менеджер' },
+                        { value: 'WAREHOUSE', label: 'Работник склада' },
                     ]} />
                 </Form.Item>
             </Form>

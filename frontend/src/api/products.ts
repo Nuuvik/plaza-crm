@@ -4,7 +4,7 @@ import type { Product, Page } from '../types'
 export const getProducts = (params?: {
     name?: string
     sku?: string
-    car?: string
+    carId?: number
     page?: number
     size?: number
     sort?: string
@@ -13,7 +13,7 @@ export const getProducts = (params?: {
 export const getArchivedProducts = (params?: {
     name?: string
     sku?: string
-    car?: string
+    carId?: number
     page?: number
     size?: number
     sort?: string
@@ -36,3 +36,6 @@ export const archiveProduct = (id: number) =>
 
 export const unarchiveProduct = (id: number) =>
     api.patch<Product>(`/products/${id}/unarchive`)
+
+export const getProductById = (id: number) =>
+    api.get<Product>(`/products/${id}`)
